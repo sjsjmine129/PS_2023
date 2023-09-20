@@ -1,3 +1,5 @@
+import math
+
 x = int(input())
 j = 0
 i = 1
