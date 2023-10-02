@@ -8,4 +8,4 @@ My goal is solve one or two problems every day.
 
 ## Authors
 
-* **solved.ac**  [sjsjmine1]([https://github.com/sjsjmine129?tab=repositories](https://solved.ac/profile/sjsjmine1)https://solved.ac/profile/sjsjmine1)
+* **solved.ac**  [sjsjmine1](https://solved.ac/profile/sjsjmine1)
