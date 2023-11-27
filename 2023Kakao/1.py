@@ -1,3 +1,4 @@
+# solved
 def solution(friends, gifts):
 
     n = len(friends)

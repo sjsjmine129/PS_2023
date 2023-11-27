@@ -1,4 +1,4 @@
-
+# not solved -> 2개, 4개인 경우만 품
 def solution(dice):
     n = len(dice)
     if n == 2:

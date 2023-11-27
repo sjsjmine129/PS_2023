@@ -1,3 +1,4 @@
+# solved
 def solution(coin, cards):
     answer = 0
     n = len(cards)

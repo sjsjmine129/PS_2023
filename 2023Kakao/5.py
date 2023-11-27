@@ -1,3 +1,4 @@
+# solved
 def solution(n, tops):
 
     green = 1
