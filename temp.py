@@ -1,6 +1,3 @@
-a = [1, 2, 3, 4, 5]
+a = [1, 2, 3, 4, 5, 6, 'e']
 
-temp = a.pop(0)
-
-print(temp)
-print(a)
+print(min(a))
