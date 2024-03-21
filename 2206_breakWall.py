@@ -1,5 +1,6 @@
-import sys
-sys.setrecursionlimit(10**6)
+# *bfs
+# *dp
+# *map
 
 [n, m] = map(int, input().split())
 
@@ -12,58 +13,39 @@ for i in range(n):
 dirc = [[0, 1], [1, 0], [0, -1], [-1, 0]]
 
 
-def findRoot(y, x, didPassBreakPoint):
-    value = []
-    passBreakPoint = didPassBreakPoint
+q = [[0, 0, 0]]
+time = 1
+record[0][0][0] = 1
 
-    record[y][x][2] = 1
+if n == 1 and m == 1:
+    print(1)
+    exit()
 
-    for i in dirc:
-        dy = i[0]
-        dx = i[1]
+while len(q):
+    nextQ = []
+    time += 1
 
-        if y+dy < 0 or y+dy >= n or x+dx < 0 or x+dx >= m:
-            continue
+    for i in q:
+        y = i[0]
+        x = i[1]
+        didBreak = i[2]
 
-        if y+dy == n-1 and x+dx == m-1:
-            value.append(1)
+        for d in dirc:
+            nY = y + d[0]
+            nX = x + d[1]
 
-        elif record[y+dy][x+dx][2] == 1 and passBreakPoint == 0:  # 부순 경우
-            passBreakPoint = 1
-            step = -1
-            if record[y+dy][x+dx][passBreakPoint] != -2:
-                step = record[y+dy][x+dx][passBreakPoint]
-            else:
-                step = findRoot(y+dy, x+dx, passBreakPoint)
+            if nY == n-1 and nX == m-1:
+                print(time)
+                exit()
 
-            if step != -1:
-                value.append(step + 1)
-            passBreakPoint = 0
+            if nY < 0 or nY >= n or nX < 0 or nX >= m:
+                continue
 
-        elif record[y+dy][x+dx][2] == 0:  # 안 부순 경우
-            step = -1
-            if record[y+dy][x+dx][passBreakPoint] != -2:
-                step = record[y+dy][x+dx][passBreakPoint]
-            else:
-                step = findRoot(y+dy, x+dx, passBreakPoint)
+            if record[nY][nX][2] == 0 and record[nY][nX][didBreak] == -2:  # space
+                record[nY][nX][didBreak] = time
+                nextQ.append([nY, nX, didBreak])
+            elif record[nY][nX][2] == 1 and didBreak == 0 and record[nY][nX][1] == -2:
+                nextQ.append([nY, nX, 1])
+    q = nextQ
 
-            if step != -1:
-                value.append(step + 1)
-
-    record[y][x][2] = 0
-
-    if len(value) == 0:
-        record[y][x][passBreakPoint] = -1
-        return -1
-    else:
-        ret = min(value)
-        record[y][x][passBreakPoint] = ret
-        return ret
-
-
-ret = findRoot(0, 0, 0)
-
-if ret == -1:
-    print(ret)
-else:
-    print(ret+1)
+print(-1)
