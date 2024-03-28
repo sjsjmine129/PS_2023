@@ -1,4 +1,4 @@
-# *
+# *구현
 
 n, l = map(int, input().split())
 
