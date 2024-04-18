@@ -1,3 +1,6 @@
+# *브루트포스
+# *구현
+
 import math
 N, M = map(int, input().split())
 n = N
