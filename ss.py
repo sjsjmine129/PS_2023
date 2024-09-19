@@ -1,4 +1,5 @@
 from math import floor
 
 
-print(floor(5/2))
+for i in range(1):
+    print(floor(3/2))
