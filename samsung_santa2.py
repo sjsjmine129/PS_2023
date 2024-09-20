@@ -272,4 +272,3 @@ for time in range(q):
     elif inputL[0] == 600:
         getBelt(inputL[1])
         # printAll()
-
