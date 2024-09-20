@@ -71,6 +71,7 @@ def buildFac(inputList):
 def moveAll(src, dst):
     if belt[src][length] == 0:
         print(belt[dst][length])
+        return
 
     # 박스들의 위치 바꾸기
     present[belt[dst][front]][front] = belt[src][back]  # dst의 맨 앞놈 앞
@@ -182,13 +183,12 @@ def splitPresent(src, dst):
     newSrcFront = present[srcMiddle][back]
     present[srcMiddle][back] = belt[dst][front]
 
-    # print("@@@",srcMiddle)
-    # printAll()
     # 가는 벨트의 정보 변경
     beforeDstFront = belt[dst][front]
     belt[dst][front] = srcFront  # 앞 교체
     beforeLen = belt[dst][length]
     belt[dst][length] = belt[dst][length] + halfSrcLen  # 길이 수정
+
     if beforeLen == 0:  # 원래 아무것도 없으면
         belt[dst][back] = srcMiddle  # 맨뒤 교체
         # 중간 찾기
@@ -204,14 +204,14 @@ def splitPresent(src, dst):
         if beforeLen == 1:
             toMove = 1 + halfSrcLen - floor(belt[dst][length]/2)
         else:
-            toMove = floor(beforeLen/2) + halfSrcLen - \
-                floor(belt[dst][length]/2)
+            toMove = floor(beforeLen/2) + halfSrcLen - floor(belt[dst][length]/2)
         newMid = belt[dst][middle]
-        # print("tomove",toMove)
+
         for i in range(toMove):
             newMid = present[newMid][front]
 
         belt[dst][middle] = newMid
+
 
     # src 벨트 값 변경
     belt[src][length] = srcLen - halfSrcLen
@@ -223,9 +223,24 @@ def splitPresent(src, dst):
     if toMove > 1:
         for i in range(toMove-1):
             newMid = present[newMid][back]
-    belt[dst][middle] = newMid
+    belt[src][middle] = newMid
 
     print(belt[dst][length])
+
+# 선물정보 얻기
+def getPresent(pId):
+    a = present[pId][front]
+    b = present[pId][back]
+
+    print(a+2*b)
+
+# 선물정보 얻기
+def getBelt(bId):
+    a = belt[bId][front]
+    b = belt[bId][back]
+    c = belt[bId][length]
+
+    print(a+ 2*b + 3*c)
 
 ######################## 작동부 ###################
 
@@ -253,5 +268,12 @@ for time in range(q):
 
     elif inputL[0] == 400:
         splitPresent(inputL[1], inputL[2])
-        printAll()
-        break
+        # printAll()
+
+    elif inputL[0] == 500:
+        getPresent(inputL[1])
+        # printAll()
+
+    elif inputL[0] == 600:
+        getBelt(inputL[1])
+        # printAll()
