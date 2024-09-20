@@ -63,7 +63,7 @@ def buildFac(inputList):
             # 벨트 정보 갱신
             belt[nowBelt][back] = newP
             belt[nowBelt][length] = belt[nowBelt][length] + 1
-            if belt[nowBelt][length] % 2 == 1:  # 총 개수가 홀수가 되었을 때 중간놈 변경
+            if belt[nowBelt][length] % 2 == 0 and  belt[nowBelt][length] > 2 :  # 총 개수가 짝수가 되었을 때 중간놈 변경
                 belt[nowBelt][middle] = present[belt[nowBelt][middle]][back]
 
 
@@ -87,12 +87,21 @@ def moveAll(src, dst):
         toMove = 1 + lenAdd - floor(belt[dst][length]/2)
     else:
         toMove = floor(lenBefore/2) + lenAdd - floor(belt[dst][length]/2)
+        # print("print",toMove)
     newMid = belt[dst][middle]
-    # print("tomove",toMove)
+
     for i in range(toMove):
         newMid = present[newMid][front]
 
     belt[dst][middle] = newMid
+
+    #마지막놈 바꾸기
+    if lenBefore == 0:
+        belt[dst][back] = belt[src][back]
+    # #길이가 0이면 마지막놈 바꾸기
+    # if belt[dst][length] == 1:
+    #     belt[dst][back] = belt[dst][front]
+
 
     # src 벨트 정보 바꾸기
     belt[src] = [-1, -1, 0, -1]
@@ -100,9 +109,8 @@ def moveAll(src, dst):
     # print
     print(belt[dst][length])
 
+
 # 앞 물건 옮기기
-
-
 def changeFront(src, dst):
     srcFront = belt[src][front]
     dstFront = belt[dst][front]
@@ -118,7 +126,7 @@ def changeFront(src, dst):
         if belt[dst][length] % 2 != 1:  # 중간놈 수정
             belt[dst][middle] = present[belt[dst][middle]][back]
         if belt[dst][length] == 0:  # 만약 다 비워지면 뒤도 삭제
-            belt[dst][back] == -1
+            belt[dst][back] = -1
 
         # 이동한 선물 정보 수정
         present[dstFront][back] = -1
@@ -134,7 +142,7 @@ def changeFront(src, dst):
         if belt[src][length] % 2 != 1:  # 중간놈 수정
             belt[src][middle] = present[belt[src][middle]][back]
         if belt[src][length] == 0:  # 만약 다 비워지면 뒤도 삭제
-            belt[src][back] == -1
+            belt[src][back] = -1
 
         # 이동한 선물 정보 수정
         present[srcFront][back] = -1
@@ -181,6 +189,7 @@ def splitPresent(src, dst):
 
     # middle 선물의 값 변경
     newSrcFront = present[srcMiddle][back]
+    present[belt[dst][front]][front] = srcMiddle
     present[srcMiddle][back] = belt[dst][front]
 
     # 가는 벨트의 정보 변경
@@ -247,6 +256,7 @@ def getBelt(bId):
 
 for time in range(q):
     inputL = [int(i) for i in input().split()]
+    print(time,"=======")
 
     if inputL[0] == 100:
         n = inputL[1]
@@ -260,7 +270,7 @@ for time in range(q):
 
     elif inputL[0] == 200:
         moveAll(inputL[1], inputL[2])
-        # printAll()
+        printAll()
 
     elif inputL[0] == 300:
         changeFront(inputL[1], inputL[2])
@@ -277,3 +287,4 @@ for time in range(q):
     elif inputL[0] == 600:
         getBelt(inputL[1])
         # printAll()
+
