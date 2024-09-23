@@ -1,7 +1,54 @@
+from itertools import combinations
 import sys
 
 
+def printAll():
+    for i in graph:
+        print(i)
+    print("")
+    for i in ids:
+        print("<", i, ">")
+        for j in ids[i]:
+            print(j, end=" ")
+        print("")
+
+
+# 열차의 데이터를 받아서 에지를 리턴
+def getEdges(start, end, inter):
+    edges = []
+
+    for i in range(start, end+1, inter):
+        for j in range(i + inter, end + 1, inter):
+            edges.append([i, j])
+
+    return edges
+
+
 def init(N, K, mId, sId, eId, mInterval):
+    global n
+    global k
+    global graph
+    global ids
+    n = N
+    k = K
+    ids = {}
+
+    graph = [{} for _ in range(n+1)]
+
+    for i in range(k):
+        #
+        ids[mId[i]] = (sId[i], eId[i], mInterval[i])
+        edges = getEdges(sId[i], eId[i], mInterval[i])
+
+        for edge in edges:
+            if edge[1] in graph[edge[0]]:
+                temp = graph[edge[0]][edge[1]]
+                graph[edge[0]][edge[1]] = temp + 1
+                graph[edge[1]][edge[0]] = temp + 1
+            else:
+                graph[edge[0]][edge[1]] = 1
+                graph[edge[1]][edge[0]] = 1
+    printAll()
     return
 
 
