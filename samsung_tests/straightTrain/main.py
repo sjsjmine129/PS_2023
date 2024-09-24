@@ -1,27 +1,7 @@
-from itertools import combinations
 import sys
 
-
-def printAll():
-    for i in graph:
-        print(i)
-    print("")
-    for i in ids:
-        print("<", i, ">")
-        for j in ids[i]:
-            print(j, end=" ")
-        print("")
-
-
-# 열차의 데이터를 받아서 에지를 리턴
-def getEdges(start, end, inter):
-    edges = []
-
-    for i in range(start, end+1, inter):
-        for j in range(i + inter, end + 1, inter):
-            edges.append([i, j])
-
-    return edges
+from collections import defaultdict
+import heapq
 
 
 def init(N, K, mId, sId, eId, mInterval):
@@ -32,36 +12,78 @@ def init(N, K, mId, sId, eId, mInterval):
     n = N
     k = K
     ids = {}
-
-    graph = [{} for _ in range(n+1)]
+    graph = defaultdict(list)
 
     for i in range(k):
-        #
-        ids[mId[i]] = (sId[i], eId[i], mInterval[i])
-        edges = getEdges(sId[i], eId[i], mInterval[i])
+        add(mId[i], sId[i], eId[i], mInterval[i])
 
-        for edge in edges:
-            if edge[1] in graph[edge[0]]:
-                temp = graph[edge[0]][edge[1]]
-                graph[edge[0]][edge[1]] = temp + 1
-                graph[edge[1]][edge[0]] = temp + 1
-            else:
-                graph[edge[0]][edge[1]] = 1
-                graph[edge[1]][edge[0]] = 1
-    printAll()
     return
 
 
 def add(mId, sId, eId, mInterval):
+    # 열차 데이터 저장
+    ids[mId] = [sId, eId, mInterval]
+
+    # 연결된 열차들 저장
+    for j in ids:
+        train = ids[j]
+        if j == mId:  # 본인이면 스킵
+            continue
+
+        # 다른 열차로 갈아탈 수 있는지
+        now = sId
+        compare = train[0]
+        while now <= eId and compare <= train[1]:
+            if now == compare:  # 역이 겹침
+                # 에지 추가
+                graph[j].append(mId)
+                graph[mId].append(j)
+                break
+            elif now > compare:  # com 가 작음
+                compare += train[2]
+            elif now < compare:  # now 가 작음
+                now += mInterval
+
     return
 
 
 def remove(mId):
+    del ids[mId]
+    # printAll()
     return
 
 
 def calculate(sId, eId):
-    return 0
+
+    # 다익스트라의 활용 -> 여러 시작점이 있는 경우
+    q = []
+    visited = []
+
+    # 초기화
+    for i in ids:
+        if ids[i][0] <= sId <= ids[i][1] and (sId-ids[i][0]) % ids[i][2] == 0:
+            heapq.heappush(q, (0, i))
+            visited.append(i)
+
+    # 경로 찾기
+    while q:
+        now = heapq.heappop(q)
+        nowI = now[1]
+
+        # 끝인지 확인
+        if ids[nowI][0] <= eId <= ids[nowI][1] and (
+                eId - ids[nowI][0]) % ids[nowI][2] == 0:
+            return now[0]
+
+        # 끝은 아닌경우 -> 그래프 탐색
+        for nextI in graph[nowI]:
+            if nextI not in ids or nextI in visited:  # 방문 했으면 스킵
+                continue
+            # 방문 안한 놈이면
+            heapq.heappush(q, (now[0]+1, nextI))
+            visited.append(nextI)
+
+    return -1
 
 
 CMD_INIT = 100
