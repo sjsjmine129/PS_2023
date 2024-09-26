@@ -70,13 +70,33 @@ def dropBox(mId: int, mLen: int, mExitA: int, mExitB: int, mCol: int) -> int:
     position[ret][mCol] = mId
     position[ret][mCol+mLen-1] = mId
 
-    printAll()
+    # printAll()
 
     return ret
 
 
 def explore(mIdA: int, mIdB: int) -> int:
-    exit()
+    q = []
+    visited = []
+
+    heapq.heappush(q,(0, mIdA))
+    visited.append(mIdA)
+
+    while q:
+        now = heapq.heappop(q)
+
+        #도착 시
+        if now[1] == mIdB:
+            return now[0]
+
+        #그래프 탐색
+        for i in graph[now[1]]:
+            if i in visited: #방문한 곳이면
+                continue
+
+            heapq.heappush(q, (now[0]+1, i))
+            visited.append(i)
+
     return -1
 
 
