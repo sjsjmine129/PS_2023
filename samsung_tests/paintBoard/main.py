@@ -1,28 +1,56 @@
 import sys
 from typing import List
 
+
 def printAll():
     print("=============")
+    print(board)
     for i in board:
-        print(i)
+        for j in i:
+            if j:
+                print("1", end=' ')
+            else:
+                print("0", end=" ")
+        print("")
 
-def decode(y, x, level, length, mCode):
-    if mCode[0]!= "(":
-        print("숫자인 경우")
 
+def decode(y, x, length, mCode):
+    if mCode[0] != "(":
+        for i in range(length):
+            for j in range(length):
+                if mCode[0] == '0':
+                    board[i+y][j+x] = False
+                else:
+                    board[i+y][j+x] = True
     else:
-        #4 번 하기
-        mCode = mCode[1:len(mCode)-1] #괄호 제거
-        print(mCode)
+        mCode = mCode[1:len(mCode)-1]  # 괄호 제거
 
-        stack = []
-        numP = 0
+        # 4 번 하기
+        for i in range(4):
+            strRverse = []
+            numP = 0
+            while True:
+                now = mCode.pop()
+                strRverse.append(now)
+                if now == "(":
+                    numP -= 1
+                elif now == ")":
+                    numP += 1
 
-        while mCode:
-            now = mCode.pop()
-            print(now)
+                if numP == 0:
+                    break
 
+            # print(strRverse[::-1])
+            nextY = y
+            nextX = x
+            halflen = length//2
 
+            if i < 2:
+                nextY += halflen
+            if i % 2 == 0:
+                nextX += halflen
+
+            decode(nextY, nextX, halflen, strRverse[::-1])
 
 
 def init(N: int, L: int, mCode: List[str]) -> None:
@@ -34,11 +62,10 @@ def init(N: int, L: int, mCode: List[str]) -> None:
     l = L
     board = [[False]*N for _ in range(N)]
 
-    mCode = mCode[0:L]
-    decode(0,0, 0, n, mCode)
+    mCode_temp = mCode[0:L]
 
-    # printAll()
-
+    decode(0, 0, n, mCode_temp)
+    printAll()
 
 
 def encode(mCode: List[str]) -> int:
