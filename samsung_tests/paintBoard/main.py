@@ -1,5 +1,6 @@
 import sys
 from typing import List
+import heapq
 
 
 def printAll():
@@ -62,26 +63,96 @@ def init(N: int, L: int, mCode: List[str]) -> None:
     l = L
     board = [[False]*N for _ in range(N)]
 
-    mCode_temp = mCode[0:L]
+    mCode_temp = mCode[0:l]
 
     decode(0, 0, n, mCode_temp)
-    printAll()
+
+
+def encoding(y, x, length):
+    if length == 1:
+        if board[y][x]:
+            return '1'
+        else:
+            return '0'
+    else:
+        half = length//2
+        part1 = encoding(y, x, half)
+        part2 = encoding(y, x+half, half)
+        part3 = encoding(y+half, x, half)
+        part4 = encoding(y+half, x+half, half)
+
+        if part1 == part2 == part3 == part4 and len(part1) == 1:
+            return part1
+        else:
+            return "("+part1+part2+part3+part4+")"
 
 
 def encode(mCode: List[str]) -> int:
-    return -1
+    result = encoding(0, 0, n)
+    ret = len(result)
+
+    for i in range(ret):
+        mCode[i] = result[i]
+    return ret
+
+
+dirction = [[1, 0], [-1, 0], [0, 1], [0, -1]]
 
 
 def makeDot(mR: int, mC: int, mSize: int, mColor: int) -> None:
-    pass
+    if mColor == 1:
+        color = True
+    else:
+        color = False
+
+    q = []
+    visited = []
+
+    heapq.heappush(q, (1, mR, mC))
+
+    while q:
+        now = heapq.heappop(q)
+
+        if 0 <= now[1] < n and 0 <= now[2] < n and [now[1], now[2]] not in visited:
+            visited.append([now[1], now[2]])
+            board[now[1]][now[2]] = color
+
+            if now[0] < mSize:
+                for i in dirction:
+                    heapq.heappush(q, (now[0]+1, now[1]+i[0], now[2]+i[1]))
 
 
 def paint(mR: int, mC: int, mColor: int) -> None:
-    pass
+    if mColor == 1:
+        color = True
+    else:
+        color = False
+
+    q = []
+
+    if board[mR][mC] == color:
+        return
+
+    board[mR][mC] = color
+    q.append([mR, mC])
+
+    while q:
+        now = q.pop(0)
+
+        for i in dirction:
+            dy = now[0]+i[0]
+            dx = now[1]+i[1]
+            if 0 <= dy < n and 0 <= dx < n and [dy, dx] and board[dy][dx] != color:
+                board[dy][dx] = color
+                q.append([dy, dx])
 
 
 def getColor(mR: int, mC: int) -> int:
-    return -1
+    if board[mR][mC]:
+        ret = 1
+    else:
+        ret = 0
+    return ret
 
 
 CMD_INIT = 100
