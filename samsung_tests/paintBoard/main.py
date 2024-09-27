@@ -1,11 +1,44 @@
 import sys
 from typing import List
 
+def printAll():
+    print("=============")
+    for i in board:
+        print(i)
+
+def decode(y, x, level, length, mCode):
+    if mCode[0]!= "(":
+        print("숫자인 경우")
+
+    else:
+        #4 번 하기
+        mCode = mCode[1:len(mCode)-1] #괄호 제거
+        print(mCode)
+
+        stack = []
+        numP = 0
+
+        while mCode:
+            now = mCode.pop()
+            print(now)
+
+
+
 
 def init(N: int, L: int, mCode: List[str]) -> None:
     global board
+    global n
+    global l
 
-    board = [[0]*N for _ in range(N)]
+    n = N
+    l = L
+    board = [[False]*N for _ in range(N)]
+
+    mCode = mCode[0:L]
+    decode(0,0, 0, n, mCode)
+
+    # printAll()
+
 
 
 def encode(mCode: List[str]) -> int:
