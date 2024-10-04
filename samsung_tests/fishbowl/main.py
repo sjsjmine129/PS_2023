@@ -44,37 +44,33 @@ def init(N: int, mWidth: int, mHeight: int, mIDs: List[int], mLengths: List[List
             upperData[tuple([ud[i][1], ud[i+1][1], ud[i+2][1]])
                       ].append([bucketID, i])
 
-    print(upperData)
-    exit()
-    # print(bukets)
-    # for i in bukets:
-    #     print(i)
-
 
 # 결합부 & 붙는지 & 높이
 def checkStructures(mLengths: List[int], mUpShapes: List[int], mDownShapes: List[int]) -> int:
 
     ret = 0
-    for p in bukets:
-        bucketID = bukets[p]
+    nowUpper = tuple(mDownShapes)
 
-        for nowW in range(w-2):
-            # 결합부 확인
-            if bucketID[nowW][1] == mDownShapes[0] and bucketID[nowW+1][1] == mDownShapes[1] and bucketID[nowW+2][1] == mDownShapes[2]:
-                # 높이 확인
-                if bucketID[nowW][0] + mLengths[0] <= h and bucketID[nowW+1][0] + mLengths[1] <= h and bucketID[nowW+2][0] + mLengths[2] <= h:
-                    # 붙는지 확인
-                    range1 = [bucketID[nowW][0]+1,
-                              bucketID[nowW][0]+mLengths[0]]
-                    range2 = [bucketID[nowW+1][0]+1,
-                              bucketID[nowW+1][0]+mLengths[1]]
-                    range3 = [bucketID[nowW+2][0]+1,
-                              bucketID[nowW+2][0]+mLengths[2]]
+    if len(upperData[nowUpper]) == 0:
+        return ret
 
-                    if range1[0] <= range2[1] and range1[1] >= range2[0] and range3[0] <= range2[1] and range3[1] >= range2[0]:
-                        ret += 1
+    for data in upperData[nowUpper]:
+        bucketID = bukets[data[0]]
+        nowW = data[1]
 
-    # print(ret)
+        # 높이 확인
+        if bucketID[nowW][0] + mLengths[0] <= h and bucketID[nowW+1][0] + mLengths[1] <= h and bucketID[nowW+2][0] + mLengths[2] <= h:
+            # 붙는지 확인
+            range1 = [bucketID[nowW][0]+1,
+                      bucketID[nowW][0]+mLengths[0]]
+            range2 = [bucketID[nowW+1][0]+1,
+                      bucketID[nowW+1][0]+mLengths[1]]
+            range3 = [bucketID[nowW+2][0]+1,
+                      bucketID[nowW+2][0]+mLengths[2]]
+
+            if range1[0] <= range2[1] and range1[1] >= range2[0] and range3[0] <= range2[1] and range3[1] >= range2[0]:
+                ret += 1
+
     return ret
 
 
@@ -83,41 +79,60 @@ def addStructures(mLengths: List[int], mUpShapes: List[int], mDownShapes: List[i
     retW = -1
 
     # 설치 위치 찾기
-    for p in bukets:
-        bucketID = bukets[p]
-        checker = False
-        for nowW in range(w-2):
-            # 결합부 확인
-            if bucketID[nowW][1] == mDownShapes[0] and bucketID[nowW+1][1] == mDownShapes[1] and bucketID[nowW+2][1] == mDownShapes[2]:
-                # 높이 확인
-                if bucketID[nowW][0] + mLengths[0] <= h and bucketID[nowW+1][0] + mLengths[1] <= h and bucketID[nowW+2][0] + mLengths[2] <= h:
-                    # 붙는지 확인
-                    range1 = [bucketID[nowW][0]+1,
-                              bucketID[nowW][0]+mLengths[0]]
-                    range2 = [bucketID[nowW+1][0]+1,
-                              bucketID[nowW+1][0]+mLengths[1]]
-                    range3 = [bucketID[nowW+2][0]+1,
-                              bucketID[nowW+2][0]+mLengths[2]]
+    nowUpper = tuple(mDownShapes)
 
-                    if range1[0] <= range2[1] and range1[1] >= range2[0] and range3[0] <= range2[1] and range3[1] >= range2[0]:
-                        retID = p
-                        retW = nowW
-                        checker = True
-                        break
-        if checker:
-            break
+    if len(upperData[nowUpper]) == 0:
+        return 0
+
+    for data in upperData[nowUpper]:
+        bucketID = bukets[data[0]]
+        nowW = data[1]
+
+        # 높이 확인
+        if bucketID[nowW][0] + mLengths[0] <= h and bucketID[nowW+1][0] + mLengths[1] <= h and bucketID[nowW+2][0] + mLengths[2] <= h:
+            # 붙는지 확인
+            range1 = [bucketID[nowW][0]+1,
+                      bucketID[nowW][0]+mLengths[0]]
+            range2 = [bucketID[nowW+1][0]+1,
+                      bucketID[nowW+1][0]+mLengths[1]]
+            range3 = [bucketID[nowW+2][0]+1,
+                      bucketID[nowW+2][0]+mLengths[2]]
+
+            if range1[0] <= range2[1] and range1[1] >= range2[0] and range3[0] <= range2[1] and range3[1] >= range2[0]:  # 가능
+                if retID == 0 or retID > data[0] or (retID == data[0] and nowW < retW):
+                    retID = data[0]
+                    retW = nowW
 
     if retID != 0:
+        buketData = bukets[retID]
+
+        # 위 모양 데이터 삭제 -> 뒤 2칸 ~ 앞 2칸
+        for i in range(-2, 3):
+            if retW + i >= 0 and retW + i + 2 < w:
+                temp = tuple(
+                    [buketData[retW+i][1], buketData[retW+i+1][1], buketData[retW+i+2][1]])
+                for data in upperData[temp]:
+                    if data[0] == retID and data[1] == retW+i:
+                        upperData[temp].remove(data)
+                        break
+
         # 설치해서 데이터 바꾸기
-        bukets[retID][retW][0] += mLengths[0]
-        bukets[retID][retW+1][0] += mLengths[1]
-        bukets[retID][retW+2][0] += mLengths[2]
-        bukets[retID][retW][1] = mUpShapes[0]
-        bukets[retID][retW+1][1] = mUpShapes[1]
-        bukets[retID][retW+2][1] = mUpShapes[2]
+        buketData[retW][0] += mLengths[0]
+        buketData[retW+1][0] += mLengths[1]
+        buketData[retW+2][0] += mLengths[2]
+        buketData[retW][1] = mUpShapes[0]
+        buketData[retW+1][1] = mUpShapes[1]
+        buketData[retW+2][1] = mUpShapes[2]
+
+        # 위 모양 데이터 갱신 -> 뒤 2칸 ~ 앞 2칸
+        for i in range(-2, 3):
+            if retW + i >= 0 and retW + i + 2 < w:
+                temp = tuple(
+                    [buketData[retW+i][1], buketData[retW+i+1][1], buketData[retW+i+2][1]])
+                upperData[temp].append([retID, retW+i])
 
     # print(retID*1000 + retW + 1)
-    # printAll()
+    # print(upperData)
     return retID*1000 + retW + 1
 
 
