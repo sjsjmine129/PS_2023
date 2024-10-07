@@ -1,4 +1,5 @@
 import sys
+from collections import defaultdict
 
 class Node:
     def __init__(self, value):
@@ -7,23 +8,68 @@ class Node:
         self.right = None
         self.value = value
 
+class LeafNode:
+    def __init__(self, row):
+        self.parent = self
+        self.row = row
+
+
+def makeTree(start, end, parent, left):
+    #마지막 노드 일때
+    if start == end:
+        new = LeafNode(m)
+        new.parent = parent
+        new.row = start
+        if left:
+            parent.left = new
+        else:
+            parent.right = new
+    else: #중간 노드일 때
+        new = Node(m)
+        new.parent = parent
+        if left:
+            parent.left = new
+        else:
+            parent.right = new
+
+        mid = (start + end) // 2
+        makeTree(start, mid, new, True)
+        makeTree(mid+1, end, new, False)
+
 
 def init(N:int, M:int) -> None:
-    root = Node(5)
-    next = root
+    global wordData
+    global root
+    global emptyData
+    global n
+    global m
+    n = N
+    m = M
 
-    for i in range(40000):
-        new = Node(i)
-        next.left = new
-        next = new
+    #단어들 위치 & 길이     열, 행, 길이
+    wordData = defaultdict(list)
 
-    now = root
+    #길이 테스트용
+    # wordMax = 100
+    # for i in range(wordMax):
+    #     wordData[i] = [1,1,1]
 
-    while now.left != None:
-        print(now.value)
-        now = now.left
+    #최대 빈공간 트리 만들기
+    # tree = [m]*(4*n) # 완정 이진트리?
+    root = Node(0)
+    mid = n//2
+    makeTree(0, mid, root, True)
+    makeTree(mid +1, n, root, False)
 
-    temp = [[1]*1000 for _ in range(20000)]
+
+    #빈공간 데이터 시작행, 길이
+    emptyData = [[[0,m]] for _ in range(n)]
+
+    new = LeafNode(m)
+    if type(new)==Node:
+        print("RRR")
+    else:
+        print("ddd")
     return
 
 def writeWord(mId:int, mLen:int) -> int:
