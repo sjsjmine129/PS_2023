@@ -147,7 +147,7 @@ def writeWord(mId: int, mLen: int) -> int:
     for i in range(mLen):
         paperData[findNode.row][colunm + i] = mId
     # 단어 정보 기록
-    wordData[mId] = [findNode.row, colunm, mLen]
+    wordData[mId] = [findNode.row, colunm]
     # 공백 기록
     recoredNewEmpty(findNode.row)
 
@@ -164,7 +164,9 @@ def eraseWord(mId: int) -> int:
     ret = wordData[mId][0]
 
     # 단어장에서 지우기
-    for i in range(wordData[mId][2]):
+    for i in range(m):
+        if wordData[mId][1]+i == m or paperData[wordData[mId][0]][wordData[mId][1]+i] != mId:
+            break
         paperData[wordData[mId][0]][wordData[mId][1]+i] = 0
 
     # 트리 갱신
