@@ -1,10 +1,9 @@
 import sys
 
-
-def printWord():
-    for i in paperData:
-        print(i)
-
+def printAll():
+    for i in range(13):
+        print(paperData[i])
+    print("+++++++++++++++++++++")
 
 class Node:
     def __init__(self, value):
@@ -62,14 +61,9 @@ def travelTree(nowNode, value) -> LeafNode:
 def recoredNewEmpty(row):
     # 빈칸 찾기
     maxLen = 0
-    tempLen = 0
     for i in paperData[row]:
-        if i == 0:
-            tempLen += 1
-            if tempLen > maxLen:
-                maxLen = tempLen
-        else:
-            tempLen = 0
+        if i[0] > maxLen:
+            maxLen = i[0]
 
     # 트리 업데이트
     leafNodeList[row].value = maxLen
@@ -97,10 +91,10 @@ def init(N: int, M: int) -> None:
     leafNodeList = [None]*n
 
     # 단어장 기록
-    paperData = [[0]*m for _ in range(n)]
+    paperData = [[[m,0]] for i in range(n)]
 
     # 단어들    [열, 행, 길이]
-    wordData = {}
+    wordData = [[-1, -1, -1]]*50001
 
     # 길이 테스트용
     # wordMax = 50000
@@ -112,6 +106,7 @@ def init(N: int, M: int) -> None:
     mid = n//2
     makeTree(0, mid, root, True)
     makeTree(mid + 1, n-1, root, False)
+    # printAll()
 
 
 def writeWord(mId: int, mLen: int) -> int:
@@ -122,60 +117,71 @@ def writeWord(mId: int, mLen: int) -> int:
         return -1
 
     # 기록 가능 행 찾기
-    tempLen = 0
     colunm = -1  # 무조건 있음 -> 실제 기록위치
-    before = 1
-    for i in range(m):
-        tempId = paperData[findNode.row][i]
-        if before == 1 and tempId == 0:  # 빈칸의 시작
-            colunm = i
-            tempLen = 1
-            before = 0
-        elif tempId == 0:  # 빈칸 세는중에 또 빈칸
-            tempLen += 1
-        else:  # 막힘
-            before = 1
-            tempLen = 0
-            continue
-
-        # 빈칸이 더 긴지
-        if tempLen == mLen:
+    index = -1
+    for i in range(len(paperData[findNode.row])):
+        if paperData[findNode.row][i][0] >= mLen:
+            colunm = paperData[findNode.row][i][1]
+            index = i
             break
 
     # 기록 시작
     # 단어장 기록
-    for i in range(mLen):
-        paperData[findNode.row][colunm + i] = mId
+    if paperData[findNode.row][index][0] == mLen:
+        del paperData[findNode.row][index]
+    else:
+        paperData[findNode.row][index] = [paperData[findNode.row][index][0]-mLen, paperData[findNode.row][index][1] + mLen ]
     # 단어 정보 기록
-    wordData[mId] = [findNode.row, colunm]
+    wordData[mId] = [findNode.row, colunm, mLen]
     # 공백 기록
     recoredNewEmpty(findNode.row)
 
     # print(findNode.row)
     # printWord()
+    # printAll()
     return findNode.row
 
 
 def eraseWord(mId: int) -> int:
-    if mId not in wordData:  # 없음
+    if mId > 50000 or wordData[mId][0] == -1:  # 없음
         # print(-1)
         return -1
 
     ret = wordData[mId][0]
+    deleteWord = wordData[mId]
 
     # 단어장에서 지우기
-    for i in range(m):
-        if wordData[mId][1]+i == m or paperData[wordData[mId][0]][wordData[mId][1]+i] != mId:
+    indexToInsert = 0
+    #어느 데이터가 그 단어 위치인지
+    for i in range(len(paperData[deleteWord[0]])):
+        nowVoid = paperData[deleteWord[0]][i]
+        if paperData[deleteWord[0]][i][1] + paperData[deleteWord[0]][i][0] <= deleteWord[1]:
+            indexToInsert = i + 1
+        else:
             break
-        paperData[wordData[mId][0]][wordData[mId][1]+i] = 0
+
+
+    paperData[deleteWord[0]].insert(indexToInsert, [deleteWord[2], deleteWord[1]])
+    #데이터 연결되었으면 붙이기
+    #앞 확인
+    if indexToInsert != 0 and paperData[deleteWord[0]][indexToInsert-1][0]+paperData[deleteWord[0]][indexToInsert-1][1] == paperData[deleteWord[0]][indexToInsert][1]:
+        paperData[deleteWord[0]][indexToInsert -1][0] = paperData[deleteWord[0]][indexToInsert-1][0] + paperData[deleteWord[0]][indexToInsert][0]
+        del paperData[deleteWord[0]][indexToInsert]
+        indexToInsert -= 1
+        # print("##")
+    if indexToInsert + 1 < len(paperData[deleteWord[0]]) and paperData[deleteWord[0]][indexToInsert][0]+paperData[deleteWord[0]][indexToInsert][1] == paperData[deleteWord[0]][indexToInsert+1][1]:
+        paperData[deleteWord[0]][indexToInsert][0] = paperData[deleteWord[0]][indexToInsert][0] + paperData[deleteWord[0]][indexToInsert+1][0]
+        del paperData[deleteWord[0]][indexToInsert + 1]
+        # print("$$")
 
     # 트리 갱신
     recoredNewEmpty(wordData[mId][0])
 
     # 단어 데이터 지우기
-    del wordData[mId]
+    wordData[mId] = [-1, -1, -1]
 
     # print(ret)
+    # printAll()
     return ret
 
 
@@ -184,7 +190,6 @@ def eraseWord(mId: int) -> int:
 CMD_INIT = 1
 CMD_WRITE = 2
 CMD_ERASE = 3
-
 
 def run():
     query = int(input())
@@ -211,7 +216,6 @@ def run():
             if ans != ret:
                 ok = False
     return ok
-
 
 if __name__ == '__main__':
     sys.stdin = open('sample_input.txt', 'r')
