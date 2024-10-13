@@ -63,10 +63,12 @@ def init(N: int, mPlane: List[List[int]]) -> None:
     global plane
     global patterns  # [pattern] = [[행, 열] ... ]
     global patternList  # index -> pattern
+    global patternlen
 
     n = N
     patterns = defaultdict(list)
     patternList = [-1, -1]  # 뒤부터 "pattern"의 키 저장
+    patternlen = [-1, -1]
     plane = [[0]*n for _ in range(n)]
     patternListIndex = 1
 
@@ -94,15 +96,16 @@ def init(N: int, mPlane: List[List[int]]) -> None:
                 if p in patterns:
                     patterns[p].append([i, j])
                     checker = patterns[p][0]
-                    break
+                    patternlen[checker] += 1
 
             if checker == 0:  # 배열에 새거 없음
-                patternListIndex += 1
-                newPattern = ablePatterns[0]
-                patternList.append(newPattern)
-                patterns[newPattern].append(patternListIndex)
-                patterns[newPattern].append([i, j])
-                checker = patternListIndex
+                for newPattern in ablePatterns:
+                    patternListIndex += 1
+                    patternList.append(newPattern)
+                    patternlen.append(1)
+                    patterns[newPattern].append(patternListIndex)
+                    patterns[newPattern].append([i, j])
+                    checker = patternListIndex
 
             # 판에 타일 인덱스 표시
             for k in range(5):
@@ -117,13 +120,11 @@ def getCount(mPiece: List[List[int]]) -> int:
         for j in range(5):
             if mPiece[i][j] == 1:
                 temp.append([i, j])
-    ablePatterns = getPatterns(temp)
+    ablePattern = makeStr(temp)
 
     ret = 0
-    for p in ablePatterns:
-        if p in patterns:
-            ret = len(patterns[p]) - 1
-            break
+    if ablePattern in patterns:
+        ret = patternlen[patterns[ablePattern][0]]
 
     # print(ret)
     return ret
