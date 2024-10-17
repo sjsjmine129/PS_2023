@@ -1,14 +1,14 @@
 import sys
 
-# 5000*5000
 
-
+# 5000 * 5000
 def init(N: int) -> None:
-    pass
+    global board
+
+    board = [[[-1]*5000 for _ in range(5000)] for _ in range(6)]
+
 
 # 50,000 -> 타워는 각 11000개까지
-
-
 def buildTower(mRow: int, mCol: int, mColor: int) -> None:
     pass
 
