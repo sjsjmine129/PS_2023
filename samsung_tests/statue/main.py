@@ -2,18 +2,18 @@ import sys
 from collections import defaultdict
 from itertools import combinations
 
+
 def init() -> None:
     global beamIDLen
     global idIndex
     global twoBeamData
 
-    beamIDLen= [0]*200
+    beamIDLen = [0]*200
     idIndex = 0
     twoBeamData = defaultdict(list)
 
 
-
-def addBeam(mLength : int) -> None:
+def addBeam(mLength: int) -> None:
     global beamIDLen
     global idIndex
     global twoBeamData
@@ -25,30 +25,32 @@ def addBeam(mLength : int) -> None:
 
     idIndex += 1
 
-def findAll(height):
-    ret =[]
 
-    #두개짜리 가져오기
+def findAll(height):
+    ret = []
+
+    # 두개짜리 가져오기
     if height in twoBeamData:
         for i in twoBeamData[height]:
             ret.append([i[0], i[1]])
 
-    #하나, 3개 짜리 가져오기
+    # 하나, 3개 짜리 가져오기
     for i in range(idIndex):
         if beamIDLen[i] == height:
             ret.append([i])
         elif height-beamIDLen[i] in twoBeamData:
             for k in twoBeamData[height-beamIDLen[i]]:
                 if i != k[0] and i != k[1]:
-                   ret.append([i, k[0], k[1]])
+                    ret.append([i, k[0], k[1]])
     # print(ret)
 
     return ret
 
-def requireSingle(mHeight : int) -> int:
+
+def requireSingle(mHeight: int) -> int:
     retList = findAll(mHeight)
 
-    ret =  100000001
+    ret = 100000001
 
     for i in retList:
         tempMax = max([beamIDLen[k] for k in i])
@@ -61,12 +63,13 @@ def requireSingle(mHeight : int) -> int:
     # print(ret)
     return ret
 
-def requireTwin(mHeight : int) -> int:
+
+def requireTwin(mHeight: int) -> int:
     retList = findAll(mHeight)
 
-    ret =  100000001
+    ret = 100000001
 
-    for first, second in list(combinations(retList,2)):
+    for first, second in list(combinations(retList, 2)):
         temp = []
         checker = False
         for i in first:
@@ -77,7 +80,7 @@ def requireTwin(mHeight : int) -> int:
         if checker:
             continue
 
-        #되는 조합
+        # 되는 조합
         tempMax = max([beamIDLen[k] for k in first+second])
         if tempMax < ret:
             ret = tempMax
