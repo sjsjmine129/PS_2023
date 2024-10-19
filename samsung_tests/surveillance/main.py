@@ -10,17 +10,17 @@ def init(N: int) -> None:
     global n
     global tower
     global partSize
-    global colorNum
+    # global colorNum
     global partNum
 
     n = N
-    partSize = 300
+    partSize = 100
     partNum = (n-1) // partSize + 1
 
     board = [[[defaultdict(list) for _ in range(partNum)]
               for _ in range(partNum)] for _ in range(6)]
     tower = {}
-    colorNum = [0, 0, 0, 0, 0, 0]
+    # colorNum = [0, 0, 0, 0, 0, 0]
 
 
 # 50,000 -> 타워는 각 11000개까지
@@ -32,8 +32,8 @@ def buildTower(mRow: int, mCol: int, mColor: int) -> None:
     board[0][partR][partC][mRow].append(mCol)
     board[mColor][partR][partC][mRow].append(mCol)
     tower[(mRow, mCol)] = mColor
-    colorNum[mColor] += 1
-    colorNum[0] += 1
+    # colorNum[mColor] += 1
+    # colorNum[0] += 1
 
 
 # 1000개까지
@@ -48,14 +48,14 @@ def removeTower(mRow: int, mCol: int) -> None:
     board[color][partR][partC][mRow].remove(mCol)
     del tower[(mRow, mCol)]
 
-    colorNum[color] -= 1
-    colorNum[0] -= 1
+    # colorNum[color] -= 1
+    # colorNum[0] -= 1
 
 
 # 10,000
 def countTower(mRow: int, mCol: int, mColor: int, mDis: int) -> int:
-    if colorNum[mColor] == 0:
-        return 0
+    # if colorNum[mColor] == 0:
+    #     return 0
 
     # 지나가는 구역 찾기 -> 겹치면 통일
     part = []
@@ -77,10 +77,12 @@ def countTower(mRow: int, mCol: int, mColor: int, mDis: int) -> int:
     nowBoard = board[mColor]
     for i in part:
         for j in nowBoard[i[0]][i[1]]:
-            if minRow <= j <= maxRow:
-                for k in nowBoard[i[0]][i[1]][j]:
-                    if minCol <= k <= maxCol:
-                        ret += 1
+            if minRow > j or j > maxRow:
+                continue
+
+            for k in nowBoard[i[0]][i[1]][j]:
+                if minCol <= k <= maxCol:
+                    ret += 1
 
     # print(ret)
     return ret
@@ -91,9 +93,9 @@ dirc = [(-1, 0),  (0, -1), (0, 1), (1, 0)]
 
 # 5,000 개 까지
 def getClosest(mRow: int, mCol: int, mColor: int) -> int:
-    if colorNum[mColor] == 0:
-        # print(-1)
-        return -1
+    # if colorNum[mColor] == 0:
+    #     # print(-1)
+    #     return -1
 
     partR = (mRow-1) // partSize
     partC = (mCol-1) // partSize
@@ -123,6 +125,9 @@ def getClosest(mRow: int, mCol: int, mColor: int) -> int:
                 if partDis + 3 > nowPart[0]:
                     heapq.heappush(q, (nowPart[0]+1, nextR, nextC))
     # print(ret)
+
+    if ret == 100001:
+        return -1
     return ret
 
 
