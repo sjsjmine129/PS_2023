@@ -14,7 +14,7 @@ def init(N: int) -> None:
     global partNum
 
     n = N
-    partSize = 100
+    partSize = 300
     partNum = (n-1) // partSize + 1
 
     board = [[[defaultdict(list) for _ in range(partNum)]
@@ -57,17 +57,21 @@ def countTower(mRow: int, mCol: int, mColor: int, mDis: int) -> int:
     if colorNum[mColor] == 0:
         return 0
 
-    # 각 꼭짓 점이 속한 구역 찾기 -> 겹치면 통일
-    part = set()
+    # 지나가는 구역 찾기 -> 겹치면 통일
+    part = []
     maxRow = min(mRow+mDis, n)
     minRow = max(1, mRow-mDis)
     maxCol = min(mCol+mDis, n)
     minCol = max(1, mCol-mDis)
 
-    part.add(((maxRow-1) // partSize, (maxCol-1) // partSize))
-    part.add(((minRow-1) // partSize, (minCol-1) // partSize))
-    part.add(((maxRow-1) // partSize, (minCol-1) // partSize))
-    part.add(((minRow-1) // partSize, (maxCol-1) // partSize))
+    maxRpart = (maxRow-1) // partSize
+    minRpart = (minRow-1) // partSize
+    maxCpart = (maxCol-1) // partSize
+    minCpart = (minCol-1) // partSize
+
+    for i in range(minRpart, maxRpart+1):
+        for j in range(minCpart, maxCpart+1):
+            part.append([i, j])
 
     ret = 0
     nowBoard = board[mColor]
