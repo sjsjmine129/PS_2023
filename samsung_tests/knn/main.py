@@ -1,4 +1,5 @@
 import sys
+import heapq
 
 
 def init(K: int, L: int) -> None:
@@ -41,8 +42,8 @@ def predict(mX: int, mY: int) -> int:
 
     record = []
     count = 0
-    # lastNum = 0
-    # lastDist = 0
+    lastNum = 0
+    lastDist = 0
 
     for dx, dy in dictction:
         nowPartX = partX + dx
@@ -55,12 +56,41 @@ def predict(mX: int, mY: int) -> int:
             c = nowPart[(x, y)]
             dist = abs(mX-x) + abs(mY-y)
             if dist <= l:  # 되는 위치
-                record.append([dist, x, y, c])
+                record.append((dist, x, y, c))
                 count += 1
+
+                # 최대값 갱신
+                if dist > lastDist:
+                    lastDist = dist
+                    lastNum = 1
+                elif dist == lastDist:
+                    lastNum += 1
+
+                # 최대값인 놈들을 빼도 되면
+                if count - lastNum >= k:
+                    # 총 개수 갱신
+                    count = count - lastNum
+
+                    # 최대값 인 데이터 삭제
+                    newRecord = []
+                    for i in record:
+                        if i[0] != lastDist:
+                            newRecord.append(i)
+                    record = newRecord
+
+                    # 최대값 갱신
+                    lastDist = 0
+                    lastNum = 0
+
+                    for i in record:
+                        if i[0] > lastDist:
+                            lastDist = i[0]
+                            lastNum = 1
+                        elif i[0] == lastDist:
+                            lastNum += 1
 
     if count >= k:
         record.sort(key=lambda x: (x[0], x[1], x[2]))
-
         color = [0 for _ in range(11)]
         for i in range(k):
             color[record[i][3]] += 1
