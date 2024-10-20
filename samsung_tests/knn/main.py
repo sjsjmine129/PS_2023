@@ -27,21 +27,26 @@ def deleteSample(mID: int) -> None:
     del plane[(mX-1)//l][(mY-1)//l][(mX, mY)]
 
 
+dictction = [(-1, -1), (-1, 0), (-1, 1), (0, -1),
+             (0, 0), (0, 1), (1, -1), (1, 0), (1, 1)]
+
 # 10000
+
+
 def predict(mX: int, mY: int) -> int:
     ret = 0
 
     partY = (mY-1)//l
     partX = (mX-1)//l
 
-    find = [[partX, partY], [partX, partY+1], [partX+1, partY], [partX+1, partY+1], [partX-1,
-                                                                                     partY], [partX, partY-1], [partX-1, partY-1], [partX+1, partY-1], [partX-1, partY+1]]
     record = []
     count = 0
     # lastNum = 0
     # lastDist = 0
 
-    for nowPartX, nowPartY in find:
+    for dx, dy in dictction:
+        nowPartX = partX + dx
+        nowPartY = partY + dy
         if nowPartX < 0 or nowPartY < 0 or nowPartX >= partNum or nowPartY >= partNum:
             continue
 
