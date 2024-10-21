@@ -1,6 +1,6 @@
 import sys
 from collections import defaultdict
-import heapq
+import heapq # 힙 대신 쓸때 정렬도 가능할 듯
 
 def printAll():
 	for i in range(partNum):
@@ -13,7 +13,7 @@ def init(N):
 	global partSize
 	global partNum
 	global midData
-	# global partData
+	global partData
 	global partEmptyData
 	global partEmptySize
 	global n
@@ -22,9 +22,9 @@ def init(N):
 	partSize = min(10000, n)
 	partNum = (n-1)//partSize + 1
 	midData = defaultdict(list)
-	# partData = [ {} for _ in range(partNum)]
 	partEmptyData = [ [[1 + i*partSize, partSize*(i+1)]] for i in range(partNum)]
 	partEmptySize = [ partSize for _ in range(partNum)]
+	partData = [ set() for _ in range(partNum)]
 
 
 #12,000
@@ -37,6 +37,8 @@ def add(mId, mSize):
 			break
 
 		if partEmptySize[i] != 0: # 이 부분에 공간 있음
+			#이 공간에 데이터 추가
+			partData[i].add(mId)
 			delIndex = 0
 			newEmpty = [-1, -1]
 			for emptyPart in partEmptyData[i]:
@@ -63,7 +65,7 @@ def add(mId, mSize):
 				partEmptyData[i].insert(0, newEmpty)
 
 	# printAll()
-	print(ret)
+	# print(ret)
 	return ret
 
 #7,000
@@ -112,12 +114,32 @@ def remove(mId):
 	del midData[mId]
 
 	# printAll()
-	print(ret)
+	# print(ret)
 	return ret
 
 #1,000
 def count(mStart, mEnd):
-	return 0
+	ret = 0
+
+	partStart = (mStart-1)//partSize
+	partEnd = (mEnd-1)//partSize
+
+	allSet = set()
+
+	for i in range(partStart, partEnd+1):
+		allSet = allSet.union(partData[i])
+
+	retSet = set()
+	for i in allSet:
+		for position in midData[i]:
+			if not(position[1] < mStart or position[0] > mEnd):
+				retSet.add(i)
+
+	# printAll()
+	# print("AllSet",allSet)
+	ret = len(retSet)
+	# print(ret)
+	return ret
 
 ##########################################################################################
 
