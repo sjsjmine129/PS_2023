@@ -1,157 +1,122 @@
 import sys
 from collections import defaultdict
-import heapq  # 힙 대신 쓸때 정렬도 가능할 듯
-
-
-def printAll():
-    for i in range(partNum):
-        print(i+1, "Empty:", partEmptySize)
-        print(partEmptyData[i])
-        print("")
 
 
 def init(N):
-    global partSize
-    global partNum
-    global midData
-    global partData
-    global partEmptyData
-    global partEmptySize
+    global emptySize
+    global emptyData
+    global fileData
     global n
 
     n = N
-    partSize = min(10000, n)
-    partNum = (n-1)//partSize + 1
-    midData = defaultdict(list)
-    partEmptyData = [
-        [[1 + i*partSize, partSize*(i+1)]] for i in range(partNum)]
-    partEmptySize = [partSize for _ in range(partNum)]
-    partData = [set() for _ in range(partNum)]
+    emptySize = n
+    emptyData = [[1, n]]
+    fileData = defaultdict(list)
+
+    return
 
 
-# 12,000
 def add(mId, mSize):
-    ret = -1
-    sizeLeft = mSize
+    global emptySize
+    global emptyData
+    global fileData
+    global n
 
-    for i in range(partNum):
-        if sizeLeft <= 0:  # 다 기록함
+    if emptySize < mSize:  # 안 들어감
+        # print(-1)
+        return -1
+
+    emptySize -= mSize  # 들어가니 데이터 저장
+    ret = emptyData[0][0]  # 첫 빈칸의 시작점이 시작점
+
+    leftSize = mSize
+    deleteNum = 0
+    for nowEmpty in emptyData:
+        nowEmptySize = nowEmpty[1] - nowEmpty[0] + 1
+        if nowEmptySize > leftSize:  # 빈칸의 일부 사용하고 끝
+            fileData[mId].append([nowEmpty[0], nowEmpty[0] + leftSize - 1])
+            nowEmpty[0] += leftSize
             break
+        elif nowEmptySize == leftSize:  # 빈칸 다 사용하고 끝
+            fileData[mId].append([nowEmpty[0], nowEmpty[1]])
+            deleteNum += 1
+            break
+        else:  # 빈칸 다 사용하고 더 필요
+            fileData[mId].append([nowEmpty[0], nowEmpty[1]])
+            leftSize -= nowEmptySize
+            deleteNum += 1
 
-        if partEmptySize[i] != 0:  # 이 부분에 공간 있음
-            # 이 공간에 데이터 추가
-            partData[i].add(mId)
-            delIndex = 0
-            newEmpty = [-1, -1]
-            for emptyPart in partEmptyData[i]:
-                if sizeLeft <= 0:
-                    break  # 다 기록 하면
-                if ret == -1:
-                    ret = emptyPart[0]  # 첫 위치 면 기록 #최적화 가능
+    # 빈칸 다 쓴놈은 삭제
+    emptyData = emptyData[deleteNum:]
 
-                delIndex += 1  # 이번 놈은 삭제
-                # 빈칸 채우기
-                nowEmptySize = emptyPart[1] - emptyPart[0] + 1
-                if nowEmptySize <= sizeLeft:  # 이 빈칸을 다 쓰는 경우
-                    heapq.heappush(midData[mId], (emptyPart[0], emptyPart[1]))
-                    partEmptySize[i] -= nowEmptySize
-                    sizeLeft -= nowEmptySize
-                else:  # 빈칸에서 끝나는 경우
-                    heapq.heappush(
-                        midData[mId], (emptyPart[0], emptyPart[0]+sizeLeft-1))
-                    partEmptySize[i] -= sizeLeft
-                    newEmpty = [emptyPart[0]+sizeLeft,
-                                emptyPart[1]]  # 쓰고 남은 부분
-                    sizeLeft = 0
-
-            # 삭제할 빈칸 삭제
-            partEmptyData[i] = partEmptyData[i][delIndex:]
-            # 새로 넣을 빈칸 추가
-            if newEmpty[0] != -1:
-                partEmptyData[i].insert(0, newEmpty)
-
-    # printAll()
     # print(ret)
     return ret
-
-# 7,000
 
 
 def remove(mId):
-    ret = 0
-    mIDList = midData[mId]
-    before = -1
+    global emptySize
+    global emptyData
+    global fileData
+    global n
 
-    for fileData in mIDList:  # 각 데이터 가서 갱신
-        # 나뉜 개수 세기
-        if before + 1 != fileData[0]:
-            ret += 1
-        before = fileData[1]
+    ret = len(fileData[mId])  # 최적화 가능 -> loop 돌면서 길이 세기
 
-        partIndex = (fileData[0]-1)//partSize  # 어느 파트 인지 확인
-        partEmptySize[partIndex] += fileData[1] - fileData[0] + 1  # 빈칸 늘리기
+    for data in fileData[mId]:
+        emptySize += data[1] - data[0] + 1  # 빈칸 크기 증가
 
-        # 빈칸 정보들 갱신하기
-        nowPart = partEmptyData[partIndex]
-        insertIndex = 0
-
-        for i in range(len(nowPart)):
-            emptyPart = nowPart[i]
-            if emptyPart[1] < fileData[0]:
-                insertIndex == i + 1
+        insertIdx = 0
+        # 빈칸 위치 찾아서 삽입
+        for i in range(len(emptyData)):  # 빈칸 개수 그때그때 체크해서 최적화 가능
+            nowEmpty = emptyData[i]
+            if nowEmpty[1] < data[0]:
+                insertIdx = i + 1
             else:
                 break
 
-        nowPart.insert(insertIndex, [fileData[0], fileData[1]])
+        # 새 빈칸 삽입
+        emptyData.insert(insertIdx, data)
 
-        # 앞뒤 확인해서 붙이기
-        if insertIndex != 0:
-            before = nowPart[insertIndex-1]
-            if before[1]+1 == nowPart[insertIndex][0]:  # 앞이랑 붙어 있음
-                temp = nowPart[insertIndex]
-                nowPart.pop(insertIndex)
-                nowPart[insertIndex-1][1] = temp[1]
-                insertIndex -= 1
-        if insertIndex != len(nowPart)-1:
-            after = nowPart[insertIndex+1]
-            if after[0] == nowPart[insertIndex][1] + 1:  # 뒤랑 붙어 있음
-                temp = nowPart[insertIndex]
-                nowPart.pop(insertIndex)
-                nowPart[insertIndex][0] = temp[0]
+        # 빈칸 합치기
+        if insertIdx > 0:
+            if emptyData[insertIdx - 1][1] + 1 == emptyData[insertIdx][0]:
+                emptyData[insertIdx - 1][1] = emptyData[insertIdx][1]
+                emptyData = emptyData[:insertIdx] + emptyData[insertIdx + 1:]
+                insertIdx -= 1
+        if insertIdx < len(emptyData) - 1:
+            if emptyData[insertIdx][1] + 1 == emptyData[insertIdx + 1][0]:
+                emptyData[insertIdx][1] = emptyData[insertIdx + 1][1]
+                emptyData = emptyData[:insertIdx + 1] + \
+                    emptyData[insertIdx + 2:]
 
-    del midData[mId]
+    del fileData[mId]  # 파일 데이터 삭제
 
-    # printAll()
     # print(ret)
     return ret
-
-# 1,000
 
 
 def count(mStart, mEnd):
+    global emptySize
+    global emptyData
+    global fileData
+    global n
+
     ret = 0
 
-    partStart = (mStart-1)//partSize
-    partEnd = (mEnd-1)//partSize
+    # 모든 데이터로 다 확인
+    for key, value in fileData.items():
+        for data in value:
+            if data[0] > mEnd:
+                break
+            elif data[1] < mStart:
+                continue
+            else:
+                ret += 1
+                break
 
-    allSet = set()
-
-    for i in range(partStart, partEnd+1):
-        allSet = allSet.union(partData[i])
-
-    retSet = set()
-    for i in allSet:
-        for position in midData[i]:
-            if not (position[1] < mStart or position[0] > mEnd):
-                retSet.add(i)
-
-    # printAll()
-    # print("AllSet",allSet)
-    ret = len(retSet)
     # print(ret)
     return ret
 
-##########################################################################################
+#################################
 
 
 CMD_INIT = 1
