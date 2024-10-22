@@ -5,6 +5,7 @@ def init(N: int, M: int, mType: list, mTime: list) -> None:
     global n
     global m
     global roadData
+    global idTotype
     global partSize
     global partNum
     global partSum
@@ -15,23 +16,26 @@ def init(N: int, M: int, mType: list, mTime: list) -> None:
     partSize = min(100, n)
     partNum = (n - 1) // partSize + 1
 
-    roadData = [{} for _ in range(partNum)]
+    roadData = [[{} for _ in range(partNum)]for _ in range(m)]
     partSum = [0 for _ in range(partNum)]
+    idTotype = []
 
     for i in range(n):
         nowPart = i // partSize
-        roadData[nowPart][i] = [mTime[i], mType[i]]
+        roadData[mType[i]][nowPart][i] = mTime[i]
         partSum[nowPart] += mTime[i]
+        idTotype.append(mType[i])
 
     return
 
 
 def update(mID: int, mNewTime: int) -> None:
+    nowType = idTotype[mID]
     nowPart = mID // partSize
-    beforeTime = roadData[nowPart][mID][0]
+    beforeTime = roadData[nowType][nowPart][mID]
 
     # 도로 정보 수정
-    roadData[nowPart][mID][0] = mNewTime
+    roadData[nowType][nowPart][mID] = mNewTime
 
     # 부분의 합 수정
     partSum[nowPart] += mNewTime - beforeTime
@@ -45,15 +49,14 @@ def updateByType(mTypeID: int, mRatio256: int) -> int:
     for part in range(partNum):
         newPartSum = 0
         beforePartSum = 0
-        for i in roadData[part]:
-            if roadData[part][i][1] == mTypeID:
-                time = roadData[part][i][0]
+        for i in roadData[mTypeID][part]:
+            time = roadData[mTypeID][part][i]
 
-                beforePartSum += time
-                newTime = (time * mRatio256) // 256
-                newPartSum += newTime
-                ret += newTime
-                roadData[part][i][0] = newTime
+            beforePartSum += time
+            newTime = (time * mRatio256) // 256
+            newPartSum += newTime
+            ret += newTime
+            roadData[mTypeID][part][i] = newTime
 
         # 부분의 합 수정
         partSum[part] += newPartSum - beforePartSum
@@ -66,8 +69,10 @@ def getPartSum(start: int, end: int) -> int:
     ret = 0
     nowPart = start // partSize
 
+    # roadData[nowType][nowPart][mID]
     for i in range(start, end):
-        ret += roadData[nowPart][i][0]
+        nowType = idTotype[i]
+        ret += roadData[nowType][nowPart][i]
 
     return ret
 
