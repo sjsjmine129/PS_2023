@@ -1,0 +1,183 @@
+#define MAXL    (10)
+#define MAX_USER    (50007)
+#define MAX_X   (10007)
+ 
+#include<set>
+#include<unordered_map>
+#include<vector>
+#include<string>
+using namespace std;
+ 
+struct USER
+{
+    int point;
+    string uname;
+}usr[MAX_USER];
+ 
+struct MSG
+{
+    int id, point, userid, parent;
+    bool isdel;
+}msg[MAX_USER];
+ 
+struct cmpU
+{
+    bool operator() (int id1, int id2) {
+        return usr[id1].point != usr[id2].point ? usr[id1].point > usr[id2].point : usr[id1].uname < usr[id2].uname;
+    }
+};
+ 
+struct cmpM
+{
+    bool operator () (int id1, int id2) {
+        return msg[id1].point != msg[id2].point ? msg[id1].point > msg[id2].point : msg[id1].id < msg[id2].id;
+    }
+};
+ 
+set<int, cmpU> setUser;
+set<int, cmpM> setMsg;
+ 
+unordered_map<string, int> umap;
+unordered_map<int, int> mmap;
+ 
+int uid, mid;
+vector<int> v[MAX_USER];
+int modifyUser[MAX_X];
+int len;
+ 
+void init()
+{
+    uid = 1;
+    mid = 1;
+    setUser.clear();
+    setMsg.clear();
+    umap.clear();
+    mmap.clear();
+    return;
+}
+ 
+int update_usr(char uname[], int point) { 
+    int id = umap[uname];
+    if (id == 0) {
+        umap[uname] = id = uid++;
+        usr[id].point = 0;
+        usr[id].uname = uname;
+    }
+    setUser.erase(id);
+    usr[id].point += point;
+    setUser.insert(id);
+    return id;
+}
+ 
+int find_parent(int p) { 
+    while (msg[p].parent != -1) {
+        p = msg[p].parent;
+    }
+    return p;
+}
+ 
+int writeMessage(char mUser[], int mID, int mPoint)
+{
+    int userid = update_usr(mUser, mPoint);
+ 
+    mmap[mID] = mid;
+    msg[mid].id = mID;
+    msg[mid].parent = -1;
+    msg[mid].point = mPoint;
+    msg[mid].userid = userid;
+    msg[mid].isdel = false;
+ 
+    v[mid].clear(); 
+    setMsg.insert(mid); 
+    mid++;
+    return usr[userid].point;
+}
+ 
+int commentTo(char mUser[], int mID, int mTargetID, int mPoint)
+{
+    int userid = update_usr(mUser, mPoint);
+    int tid = mmap[mTargetID];
+ 
+    int pid = find_parent(tid);
+    mmap[mID] = mid;
+    msg[mid].id = mID;
+    msg[mid].parent = tid;
+    msg[mid].point = mPoint;
+    msg[mid].userid = userid;
+    msg[mid].isdel = false;
+ 
+    v[mid].clear();
+    v[tid].push_back(mid);
+ 
+    setMsg.erase(pid);
+    msg[pid].point += mPoint;
+    setMsg.insert(pid);
+ 
+    mid++;
+    return msg[pid].point;
+}
+ 
+void sub_erase(int cur, int p) {
+    for (auto it : v[cur]) {
+        if (!msg[it].isdel) {
+            setUser.erase(msg[it].userid);
+            msg[p].point -= msg[it].point;
+            usr[msg[it].userid].point -= msg[it].point;
+            modifyUser[len++] = msg[it].userid;
+            sub_erase(it, p);
+            msg[it].isdel = true;
+        }
+    }
+}
+ 
+int erase(int mID)
+{
+    len = 0;
+    int msgId = mmap[mID];
+    int pid = find_parent(msgId);
+    setMsg.erase(pid);
+ 
+    sub_erase(msgId, pid);
+    int userid = msg[msgId].userid;
+    setUser.erase(userid);
+    usr[userid].point -= msg[msgId].point;
+    modifyUser[len++] = userid;
+    for (int i = 0; i < len; i++) {
+        setUser.insert(modifyUser[i]);
+    }
+    if (msg[msgId].parent == -1) {
+        return usr[userid].point;
+    }
+    else {
+        msg[pid].point -= msg[msgId].point;
+        setMsg.insert(pid);
+        msg[msgId].isdel = true;
+        return msg[pid].point;
+    }
+}
+ 
+void getBestMessages(int mBestMessageList[])
+{
+    int inx = 0;
+    for (auto it : setMsg) {
+        if (inx >= 5) break;
+        mBestMessageList[inx] = msg[it].id;
+        inx++;
+    }
+    return;
+}
+ 
+void getBestUsers(char mBestUserList[][MAXL + 1])
+{
+    int inx = 0;
+    for (auto it : setUser) {
+        if (inx >= 5) break;
+        int i;
+        for (i = 0; i < usr[it].uname.size(); i++) {
+            mBestUserList[inx][i] = usr[it].uname[i];
+        }
+        mBestUserList[inx][i] = '\0';
+        inx++;
+    }
+    return;
+}
