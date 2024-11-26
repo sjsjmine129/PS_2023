@@ -1,146 +1,129 @@
 import sys
 from typing import List
 from collections import defaultdict, deque
-from heapq import heappush, heappop, heapify, nlargest, nsmallest
-from bisect import bisect_left, bisect_right, insort, bisect
+from heapq import heappush, heappop
 
-global Wdic, Pdic, Wmaxh, Pmaxh
-Wdic, Pdic, Wmaxh, Pmaxh = None, None, None, None
-
-
-class Write:
-    def __init__(self, usr, mid, pnt):
-        self.usr = usr
-        self.mid = mid
-        self.pnt = pnt
-        self.tot = pnt
-        self.par = None
-        self.childs = []
-        self.dep = -1
+global message_dict
+global user_points
+global message_heap
+global user_heap
+message_dict = None
+user_points = None
+message_heap = None
+user_heap = None
 
 
 def init() -> None:
-    global Wdic, Pdic, Wmaxh, Pmaxh
-    Wdic, Pdic, Wmaxh, Pmaxh = {}, defaultdict(int), [], []
-    pass
+    global message_dict, user_points, message_heap, user_heap
+    message_dict = {}
+    user_points = defaultdict(int)
+    message_heap = []
+    user_heap = []
 
 
-def writeMessage(mUser: str, mID: int, mPoint: int) -> int:
-    global Wdic, Pdic, Wmaxh, Pmaxh
-    Wdic[mID] = Write(mUser, mID, mPoint)
-    Wdic[mID].dep = 0
-    heappush(Wmaxh, (-mPoint, mID))
-    Pdic[mUser] += mPoint
-    heappush(Pmaxh, (-Pdic[mUser], mUser))
-    return Pdic[mUser]
+def writeMessage(user: str, message_id: int, points: int) -> int:
+    global message_dict, user_points, message_heap, user_heap
+    # [user, message_id, points, total_points, parent, children, depth]
+    new_message = [user, message_id, points, points, None, [], 0]
+    message_dict[message_id] = new_message
+
+    heappush(message_heap, (-points, message_id))
+    user_points[user] += points
+    heappush(user_heap, (-user_points[user], user))
+
+    return user_points[user]
 
 
-def commentTo(mUser: str, mID: int, mTargetID: int, mPoint: int) -> int:
-    global Wdic, Pdic, Wmaxh, Pmaxh
-    chi = Wdic[mID] = Write(mUser, mID, mPoint)
-    par = Wdic[mTargetID]
-    chi.par = par
-    par.childs.append(chi.mid)
-    chi.dep = par.dep + 1
-    p = chi
-    Pdic[mUser] += mPoint
-    heappush(Pmaxh, (-Pdic[mUser], mUser))
-    while p.dep != 0:
-        p.par.tot += chi.pnt
-        p = p.par
-    heappush(Wmaxh, (-p.tot, p.mid))
-    return p.tot
+def commentTo(user: str, message_id: int, target_message_id: int, points: int) -> int:
+    global message_dict, user_points, message_heap, user_heap
+    parent_message = message_dict[target_message_id]
+    # [user, message_id, points, total_points, parent, children, depth]
+    new_message = [user, message_id, points, points,
+                   parent_message, [], parent_message[6] + 1]
+    parent_message[5].append(message_id)  # Add to parent's children
+    message_dict[message_id] = new_message
+
+    user_points[user] += points
+    heappush(user_heap, (-user_points[user], user))
+
+    # Update total points up the chain
+    current_message = new_message
+    while current_message[4]:
+        current_message[4][3] += points  # Update parent's total points
+        current_message = current_message[4]
+
+    heappush(message_heap, (-current_message[3], current_message[1]))
+    return current_message[3]
 
 
-def bfsRemove(sid):
-    global Wdic, Pdic
-    Qu = deque([sid])
-    while Qu:
-        mid = Qu.popleft()
-        nd = Wdic[mid]
-        Pdic[nd.usr] -= nd.pnt
-        heappush(Pmaxh, (-Pdic[nd.usr], nd.usr))
-        Wdic.pop(mid)
-        for nid in nd.childs:
-            Qu.append(nid)
+def erase(message_id: int) -> int:
+    global message_dict, user_points, message_heap
+    message_to_erase = message_dict[message_id]
+    if not message_to_erase[4]:  # No parent means it's a root message
+        queue = deque([message_id])
+        while queue:
+            mid = queue.popleft()
+            message = message_dict[mid]
+            user_points[message[0]] -= message[2]  # Subtract points
+            heappush(user_heap, (-user_points[message[0]], message[0]))
+            del message_dict[mid]
+            queue.extend(message[5])  # Add children to the queue
+        return user_points[message_to_erase[0]]
+
+    parent_message = message_to_erase[4]
+    current_message = message_to_erase
+    while current_message[4]:
+        # Subtract total points from parent
+        current_message[4][3] -= message_to_erase[3]
+        current_message = current_message[4]
+
+    heappush(message_heap, (-current_message[3], current_message[1]))
+    parent_message[5].remove(message_id)  # Remove from parent's children
+    queue = deque([message_id])
+    while queue:
+        mid = queue.popleft()
+        message = message_dict[mid]
+        user_points[message[0]] -= message[2]  # Subtract points
+        heappush(user_heap, (-user_points[message[0]], message[0]))
+        del message_dict[mid]
+        queue.extend(message[5])  # Add children to the queue
+    return current_message[3]
 
 
-def erase(mID: int) -> int:
-    global Wdic, Pdic
-    chi = Wdic[mID]
-    if not chi.par:
-        bfsRemove(chi.mid)
-        return Pdic[chi.usr]
-    par = chi.par
-    p = chi
-    while p.dep != 0:
-        p.par.tot -= chi.tot
-        p = p.par
-    heappush(Wmaxh, (-p.tot, p.mid))
-    par.childs.remove(chi.mid)
-    bfsRemove(chi.mid)
-    return p.tot
-
-
-def lazyUpdateW():
-    global Wdic, Wmaxh
-    if not Wdic:
-        Wmaxh.clear()
-
-    while Wmaxh:
-        h = Wmaxh[0]
-        if h[1] in Wdic and -h[0] == Wdic[h[1]].tot:
-            return
-        else:
-            while Wmaxh and h == Wmaxh[0]:
-                heappop(Wmaxh)
-
-
-def lazyUpdateP():
-    global Pdic, Pmaxh
-    if not Pdic:
-        Pmaxh.clear()
-
-    while Pmaxh:
-        h = Pmaxh[0]
-        if h[1] in Pdic and -h[0] == Pdic[h[1]]:
-            return
-        else:
-            while Pmaxh and h == Pmaxh[0]:
-                heappop(Pmaxh)
-
-
-def getBestMessages(mBestMessageList: List[int]) -> None:
-    global Wmaxh
-    tmp = []
+def getBestMessages(best_message_list: List[int]) -> None:
+    global message_heap
+    temp_heap = []
     for i in range(5):
-        lazyUpdateW()
-        tu = heappop(Wmaxh)
-        mid = tu[1]
-        tmp.append(tu)
-        mBestMessageList[i] = mid
-        while Wmaxh and Wmaxh[0][1] == mid:
-            heappop(Wmaxh)
-    while tmp:
-        heappush(Wmaxh, tmp.pop())
+        while message_heap:
+            points, message_id = message_heap[0]
+            if message_id in message_dict and -points == message_dict[message_id][3]:
+                break
+            heappop(message_heap)
+        points, message_id = heappop(message_heap)
+        best_message_list[i] = message_id
+        temp_heap.append((points, message_id))
+        while message_heap and message_heap[0][1] == message_id:
+            heappop(message_heap)
+    for entry in temp_heap:
+        heappush(message_heap, entry)
 
-    pass
 
-
-def getBestUsers(mBestUserList: List[str]) -> None:
-    global Pmaxh
-    tmp = []
+def getBestUsers(best_user_list: List[str]) -> None:
+    global user_heap
+    temp_heap = []
     for i in range(5):
-        lazyUpdateP()
-        tu = heappop(Pmaxh)
-        usr = tu[1]
-        tmp.append(tu)
-        mBestUserList[i] = usr
-        while Pmaxh and Pmaxh[0][1] == usr:
-            heappop(Pmaxh)
-    while tmp:
-        heappush(Pmaxh, tmp.pop())
-    pass
+        while user_heap:
+            points, user = user_heap[0]
+            if user in user_points and -points == user_points[user]:
+                break
+            heappop(user_heap)
+        points, user = heappop(user_heap)
+        best_user_list[i] = user
+        temp_heap.append((points, user))
+        while user_heap and user_heap[0][1] == user:
+            heappop(user_heap)
+    for entry in temp_heap:
+        heappush(user_heap, entry)
 
 
 # Do not change below
@@ -154,55 +137,55 @@ CMD_GET_BEST_USERS = 600
 
 def run():
     Q = int(input())
-    okay = False
+    success = False
 
-    mBestUserList = [None for _ in range(5)]
-    mBestMessageList = [0 for _ in range(5)]
+    best_user_list = [None for _ in range(5)]
+    best_message_list = [0 for _ in range(5)]
 
     for q in range(Q):
         input_iter = iter(input().split())
         cmd = int(next(input_iter))
         if cmd == CMD_INIT:
             init()
-            okay = True
+            success = True
         elif cmd == CMD_WRITE_MESSAGE:
-            mUser = next(input_iter)
-            mID = int(next(input_iter))
-            mPoint = int(next(input_iter))
-            ret = writeMessage(mUser, mID, mPoint)
-            ans = int(next(input_iter))
-            if ret != ans:
-                okay = False
+            user = next(input_iter)
+            message_id = int(next(input_iter))
+            points = int(next(input_iter))
+            result = writeMessage(user, message_id, points)
+            expected_result = int(next(input_iter))
+            if result != expected_result:
+                success = False
         elif cmd == CMD_COMMENT_TO:
-            mUser = next(input_iter)
-            mID = int(next(input_iter))
-            mTargetID = int(next(input_iter))
-            mPoint = int(next(input_iter))
-            ret = commentTo(mUser, mID, mTargetID, mPoint)
-            ans = int(next(input_iter))
-            if ret != ans:
-                okay = False
+            user = next(input_iter)
+            message_id = int(next(input_iter))
+            target_message_id = int(next(input_iter))
+            points = int(next(input_iter))
+            result = commentTo(user, message_id, target_message_id, points)
+            expected_result = int(next(input_iter))
+            if result != expected_result:
+                success = False
         elif cmd == CMD_ERASE:
-            mID = int(next(input_iter))
-            ret = erase(mID)
-            ans = int(next(input_iter))
-            if ret != ans:
-                okay = False
+            message_id = int(next(input_iter))
+            result = erase(message_id)
+            expected_result = int(next(input_iter))
+            if result != expected_result:
+                success = False
         elif cmd == CMD_GET_BEST_MESSAGES:
-            getBestMessages(mBestMessageList)
+            getBestMessages(best_message_list)
             for i in range(5):
-                ans = int(next(input_iter))
-                if mBestMessageList[i] != ans:
-                    okay = False
+                expected_result = int(next(input_iter))
+                if best_message_list[i] != expected_result:
+                    success = False
         elif cmd == CMD_GET_BEST_USERS:
-            getBestUsers(mBestUserList)
+            getBestUsers(best_user_list)
             for i in range(5):
-                ans = next(input_iter)
-                if mBestUserList[i] != ans:
-                    okay = False
+                expected_result = next(input_iter)
+                if best_user_list[i] != expected_result:
+                    success = False
         else:
-            okay = False
-    return okay
+            success = False
+    return success
 
 
 if __name__ == '__main__':
