@@ -4,6 +4,8 @@
 	},
 	"python.formatting.provider": "none",
 	"files.associations": {
-		"답": "cpp"
+		"답": "cpp",
+		"queue": "cpp",
+		"vector": "cpp"
 	}
 }
