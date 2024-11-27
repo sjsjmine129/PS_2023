@@ -22,31 +22,34 @@ bool visited[MAX_SIZE + 2][MAX_SIZE + 2];
 const int rowMoves[4] = {1, 0, -1, 0};
 const int colMoves[4] = {0, 1, 0, -1};
 
-// Helper: Generate hash value from map structure
+// Helper: Generate hash value from map segment (used for horizontal/vertical structures)
 int generateHash(int length, bool reverse, const int mapSegment[]) {
     int hashValue = 0;
     for (int i = 0; i < length - 1; i++) {
-        int diff = reverse ? (mapSegment[length - 1 - i] - mapSegment[length - 2 - i]) 
-                           : (mapSegment[i + 1] - mapSegment[i]);
-        hashValue = hashValue * 10 + (diff + 5);
+        int diff = reverse 
+            ? (mapSegment[length - 1 - i] - mapSegment[length - 2 - i]) 
+            : (mapSegment[i + 1] - mapSegment[i]);
+        hashValue = hashValue * 10 + (diff + 5);  // Offset the difference by 5 to avoid negative values
     }
     return hashValue;
 }
 
-// Helper: Copy map data from input
-void copyMap(int mMap[20][20]) {
+// Helper: Copy map data from input to the original and temp maps
+void copyMap(const int inputMap[20][20]) {
     for (int i = 1; i <= gridSize; i++)
-        for (int j = 1; j <= gridSize; j++)
-            tempMap[i][j] = originalMap[i][j] = mMap[i - 1][j - 1];
+        for (int j = 1; j <= gridSize; j++) {
+            originalMap[i][j] = inputMap[i - 1][j - 1];
+            tempMap[i][j] = originalMap[i][j];
+        }
 }
 
-// Helper: Clear all structure lists
+// Helper: Clear all structure lists to prepare for the next operation
 void clearStructureLists() {
     for (auto &list : structureList)
         list.clear();
 }
 
-// Helper: Process structures for each row/column based on length
+// Helper: Process structures for each row/column based on length (both horizontal and vertical)
 void processStructures(int length, bool isHorizontal) {
     for (int i = 1; i <= (isHorizontal ? gridSize : gridSize - length + 1); i++) {
         for (int j = 1; j <= (isHorizontal ? gridSize - length + 1 : gridSize); j++) {
@@ -64,6 +67,7 @@ void processStructures(int length, bool isHorizontal) {
     }
 }
 
+// Function to initialize the grid and precompute structure hashes
 void init(int N, int mMap[20][20]) {
     gridSize = N;
     copyMap(mMap);
@@ -71,35 +75,36 @@ void init(int N, int mMap[20][20]) {
 
     // Precompute structures for lengths 2 to 5
     for (int length = 2; length <= 5; length++) {
-        processStructures(length, true);  // Horizontal
-        processStructures(length, false); // Vertical
+        processStructures(length, true);  // Horizontal structures
+        processStructures(length, false); // Vertical structures
     }
 }
 
-// Counts structures matching a given pattern hash
+// Function to count how many structures match a given pattern hash
 int numberOfCandidate(int M, int mStructure[5]) {
     if (M == 1)
-        return gridSize * gridSize;
+        return gridSize * gridSize;  // If structure length is 1, every cell is a candidate
 
     int structureHash = 0;
-    for (int i = 0; i + 1 < M; i++)
+    for (int i = 0; i + 1 < M; i++) {
         structureHash = structureHash * 10 + (mStructure[i] - mStructure[i + 1] + 5);
+    }
 
     return structureList[structureHash].size();
 }
 
-// BFS helper to calculate unsubmerged area
+// BFS helper to calculate the unsubmerged area given a sea level
 int calculateUnsubmergedArea(int seaLevel) {
     queue<pair<int, int>> seaQueue;
-    fill(&visited[0][0], &visited[MAX_SIZE + 2][0], false);
+    fill(&visited[0][0], &visited[MAX_SIZE + 2][0], false);  // Reset visited array
 
-    // Add border cells to queue
+    // Add border cells to queue (these are always considered submerged)
     for (int i = 0; i <= gridSize + 1; i++)
         for (int j = 0; j <= gridSize + 1; j++)
             if (i == 0 || i == gridSize + 1 || j == 0 || j == gridSize + 1)
                 seaQueue.push({i, j}), visited[i][j] = true;
 
-    // Perform BFS
+    // Perform BFS to mark all submerged areas
     while (!seaQueue.empty()) {
         auto [row, col] = seaQueue.front();
         seaQueue.pop();
@@ -114,7 +119,7 @@ int calculateUnsubmergedArea(int seaLevel) {
         }
     }
 
-    // Calculate safe area
+    // Count the safe area (unsubmerged)
     int safeArea = 0;
     for (int i = 1; i <= gridSize; i++)
         for (int j = 1; j <= gridSize; j++)
@@ -124,45 +129,52 @@ int calculateUnsubmergedArea(int seaLevel) {
     return safeArea;
 }
 
+// Main function to calculate the maximum safe area after placing a structure
 int maxArea(int M, int mStructure[5], int seaLevel) {
     int maxSafeArea = -1;
 
-    // Single structure case
+    // Single structure case (M = 1)
     if (M == 1) {
-        for (int i = 1; i <= gridSize; i++)
+        for (int i = 1; i <= gridSize; i++) {
             for (int j = 1; j <= gridSize; j++) {
                 tempMap[i][j] = originalMap[i][j] + mStructure[0];
                 maxSafeArea = max(maxSafeArea, calculateUnsubmergedArea(seaLevel));
-                tempMap[i][j] = originalMap[i][j];
+                tempMap[i][j] = originalMap[i][j];  // Restore the map
             }
+        }
         return maxSafeArea;
     }
 
+    // For multi-cell structures (M > 1), generate the hash of the structure
     int structureHash = 0;
-    for (int i = 0; i + 1 < M; i++)
+    for (int i = 0; i + 1 < M; i++) {
         structureHash = structureHash * 10 + (mStructure[i] - mStructure[i + 1] + 5);
+    }
 
-    // Iterate over matching structures
+    // Iterate over matching structures and compute max safe area
     for (const auto &wall : structureList[structureHash]) {
-        int baseHeight = wall.isReversed 
-                        ? originalMap[wall.row + (wall.isHorizontal ? 0 : M - 1)][wall.col + (wall.isHorizontal ? M - 1 : 0)] 
-                        : originalMap[wall.row][wall.col];
+        int baseHeight = wall.isReversed
+                         ? originalMap[wall.row + (wall.isHorizontal ? 0 : M - 1)][wall.col + (wall.isHorizontal ? M - 1 : 0)] 
+                         : originalMap[wall.row][wall.col];
         int height = mStructure[0] + baseHeight;
 
-        for (int i = 0; i < M; i++)
+        // Place the structure on the temporary map
+        for (int i = 0; i < M; i++) {
             if (wall.isHorizontal)
                 tempMap[wall.row][wall.col + i] = height;
             else
                 tempMap[wall.row + i][wall.col] = height;
+        }
 
         maxSafeArea = max(maxSafeArea, calculateUnsubmergedArea(seaLevel));
 
         // Restore the temporary map
-        for (int i = 0; i < M; i++)
+        for (int i = 0; i < M; i++) {
             if (wall.isHorizontal)
                 tempMap[wall.row][wall.col + i] = originalMap[wall.row][wall.col + i];
             else
                 tempMap[wall.row + i][wall.col] = originalMap[wall.row + i][wall.col];
+        }
     }
 
     return maxSafeArea;
