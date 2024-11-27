@@ -2,8 +2,8 @@
 #include <queue>
 using namespace std;
 
-constexpr int MAX_SIZE = 20;
-constexpr int MAX_HASH_VALUE = 9999;
+const int MAX_SIZE = 20;
+const int MAX_HASH_VALUE = 9999;
 
 int gridSize;
 int originalMap[MAX_SIZE + 2][MAX_SIZE + 2];
@@ -19,64 +19,67 @@ struct StructureInfo {
 vector<StructureInfo> structureList[MAX_HASH_VALUE + 1];
 bool visited[MAX_SIZE + 2][MAX_SIZE + 2];
 
-const int rowMoves[4] = {1, 0, -1, 0};
-const int colMoves[4] = {0, 1, 0, -1};
+int rowMoves[4] = {1, 0, -1, 0};
+int colMoves[4] = {0, 1, 0, -1};
 
 // Helper: Generate hash value from map structure
-int generateHash(int length, bool reverse, const int mapSegment[]) {
+int generateHash(int baseValue, int length, bool reverse, int mapSegment[]) {
     int hashValue = 0;
     for (int i = 0; i < length - 1; i++) {
-        int diff = reverse ? (mapSegment[length - 1 - i] - mapSegment[length - 2 - i]) 
-                           : (mapSegment[i + 1] - mapSegment[i]);
+        int diff = reverse ? (mapSegment[length - 1 - i] - mapSegment[length - 2 - i]) : (mapSegment[i + 1] - mapSegment[i]);
         hashValue = hashValue * 10 + (diff + 5);
     }
     return hashValue;
 }
 
-// Helper: Copy map data from input
-void copyMap(int mMap[20][20]) {
+void init(int N, int mMap[20][20]) {
+    gridSize = N;
+
+    // Copy input map into original and temporary maps
     for (int i = 1; i <= gridSize; i++)
         for (int j = 1; j <= gridSize; j++)
             tempMap[i][j] = originalMap[i][j] = mMap[i - 1][j - 1];
-}
 
-// Helper: Clear all structure lists
-void clearStructureLists() {
+    // Clear structure lists
     for (auto &list : structureList)
         list.clear();
-}
 
-// Helper: Process structures for each row/column based on length
-void processStructures(int length, bool isHorizontal) {
-    for (int i = 1; i <= (isHorizontal ? gridSize : gridSize - length + 1); i++) {
-        for (int j = 1; j <= (isHorizontal ? gridSize - length + 1 : gridSize); j++) {
-            int mapSegment[5];
-            for (int k = 0; k < length; k++)
-                mapSegment[k] = isHorizontal ? originalMap[i][j + k] : originalMap[i + k][j];
+    // Precompute structures for all possible lengths
+    for (int length = 2; length <= 5; length++) {
+        for (int i = 1; i <= gridSize; i++) {
+            for (int j = 1; j + length - 1 <= gridSize; j++) {
+                // Generate and store horizontal structures
+                int mapSegment[5];
+                for (int k = 0; k < length; k++)
+                    mapSegment[k] = originalMap[i][j + k];
 
-            int forwardHash = generateHash(length, false, mapSegment);
-            structureList[forwardHash].push_back({i, j, isHorizontal, false});
+                int forwardHash = generateHash(0, length, false, mapSegment);
+                structureList[forwardHash].push_back({i, j, true, false});
 
-            int reverseHash = generateHash(length, true, mapSegment);
-            if (reverseHash != forwardHash)
-                structureList[reverseHash].push_back({i, j, isHorizontal, true});
+                int reverseHash = generateHash(0, length, true, mapSegment);
+                if (reverseHash != forwardHash)
+                    structureList[reverseHash].push_back({i, j, true, true});
+            }
+        }
+        
+        // Generate and store vertical structures
+        for (int i = 1; i + length - 1 <= gridSize; i++) {
+            for (int j = 1; j <= gridSize; j++) {
+                int mapSegment[5];
+                for (int k = 0; k < length; k++)
+                    mapSegment[k] = originalMap[i + k][j];
+
+                int verticalHash = generateHash(0, length, false, mapSegment);
+                structureList[verticalHash].push_back({i, j, false, false});
+
+                int reverseVerticalHash = generateHash(0, length, true, mapSegment);
+                if (reverseVerticalHash != verticalHash)
+                    structureList[reverseVerticalHash].push_back({i, j, false, true});
+            }
         }
     }
 }
 
-void init(int N, int mMap[20][20]) {
-    gridSize = N;
-    copyMap(mMap);
-    clearStructureLists();
-
-    // Precompute structures for lengths 2 to 5
-    for (int length = 2; length <= 5; length++) {
-        processStructures(length, true);  // Horizontal
-        processStructures(length, false); // Vertical
-    }
-}
-
-// Counts structures matching a given pattern hash
 int numberOfCandidate(int M, int mStructure[5]) {
     if (M == 1)
         return gridSize * gridSize;
@@ -88,18 +91,16 @@ int numberOfCandidate(int M, int mStructure[5]) {
     return structureList[structureHash].size();
 }
 
-// BFS helper to calculate unsubmerged area
-int calculateUnsubmergedArea(int seaLevel) {
+// Helper: Calculate unsubmerged area using BFS
+int calculateUnsubmergedArea(int mSeaLevel) {
     queue<pair<int, int>> seaQueue;
     fill(&visited[0][0], &visited[MAX_SIZE + 2][0], false);
 
-    // Add border cells to queue
     for (int i = 0; i <= gridSize + 1; i++)
         for (int j = 0; j <= gridSize + 1; j++)
             if (i == 0 || i == gridSize + 1 || j == 0 || j == gridSize + 1)
                 seaQueue.push({i, j}), visited[i][j] = true;
 
-    // Perform BFS
     while (!seaQueue.empty()) {
         auto [row, col] = seaQueue.front();
         seaQueue.pop();
@@ -107,14 +108,13 @@ int calculateUnsubmergedArea(int seaLevel) {
         for (int k = 0; k < 4; k++) {
             int newRow = row + rowMoves[k], newCol = col + colMoves[k];
             if (newRow >= 1 && newRow <= gridSize && newCol >= 1 && newCol <= gridSize &&
-                !visited[newRow][newCol] && tempMap[newRow][newCol] < seaLevel) {
+                !visited[newRow][newCol] && tempMap[newRow][newCol] < mSeaLevel) {
                 seaQueue.push({newRow, newCol});
                 visited[newRow][newCol] = true;
             }
         }
     }
 
-    // Calculate safe area
     int safeArea = 0;
     for (int i = 1; i <= gridSize; i++)
         for (int j = 1; j <= gridSize; j++)
@@ -124,17 +124,17 @@ int calculateUnsubmergedArea(int seaLevel) {
     return safeArea;
 }
 
-int maxArea(int M, int mStructure[5], int seaLevel) {
+int maxArea(int M, int mStructure[5], int mSeaLevel) {
     int maxSafeArea = -1;
 
-    // Single structure case
     if (M == 1) {
-        for (int i = 1; i <= gridSize; i++)
+        for (int i = 1; i <= gridSize; i++) {
             for (int j = 1; j <= gridSize; j++) {
                 tempMap[i][j] = originalMap[i][j] + mStructure[0];
-                maxSafeArea = max(maxSafeArea, calculateUnsubmergedArea(seaLevel));
+                maxSafeArea = max(maxSafeArea, calculateUnsubmergedArea(mSeaLevel));
                 tempMap[i][j] = originalMap[i][j];
             }
+        }
         return maxSafeArea;
     }
 
@@ -142,28 +142,25 @@ int maxArea(int M, int mStructure[5], int seaLevel) {
     for (int i = 0; i + 1 < M; i++)
         structureHash = structureHash * 10 + (mStructure[i] - mStructure[i + 1] + 5);
 
-    // Iterate over matching structures
     for (const auto &wall : structureList[structureHash]) {
-        int baseHeight = wall.isReversed 
-                        ? originalMap[wall.row + (wall.isHorizontal ? 0 : M - 1)][wall.col + (wall.isHorizontal ? M - 1 : 0)] 
-                        : originalMap[wall.row][wall.col];
+        int baseHeight = wall.isReversed ? originalMap[wall.row + (wall.isHorizontal ? 0 : M - 1)][wall.col + (wall.isHorizontal ? M - 1 : 0)] : originalMap[wall.row][wall.col];
         int height = mStructure[0] + baseHeight;
 
-        for (int i = 0; i < M; i++)
+        for (int i = 0; i < M; i++) {
             if (wall.isHorizontal)
                 tempMap[wall.row][wall.col + i] = height;
             else
                 tempMap[wall.row + i][wall.col] = height;
+        }
 
-        maxSafeArea = max(maxSafeArea, calculateUnsubmergedArea(seaLevel));
+        maxSafeArea = max(maxSafeArea, calculateUnsubmergedArea(mSeaLevel));
 
-        // Restore the temporary map
-        for (int i = 0; i < M; i++)
+        for (int i = 0; i < M; i++) {
             if (wall.isHorizontal)
                 tempMap[wall.row][wall.col + i] = originalMap[wall.row][wall.col + i];
             else
                 tempMap[wall.row + i][wall.col] = originalMap[wall.row + i][wall.col];
+        }
     }
-
     return maxSafeArea;
 }

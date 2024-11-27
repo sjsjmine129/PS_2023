@@ -6,6 +6,7 @@
 	"files.associations": {
 		"답": "cpp",
 		"queue": "cpp",
-		"vector": "cpp"
+		"vector": "cpp",
+		"후보2씨": "cpp"
 	}
 }
