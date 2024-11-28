@@ -1,92 +1,91 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
- 
+
 using namespace std;
- 
-unordered_map<string, int> prs[1005];
-unordered_map<string, vector<int>> group[105];
- 
+
+unordered_map<string, int> userEvents[1005];
+unordered_map<string, vector<int>> eventGroups[105];
+
 void init()
 {
-    for (int i = 0; i < 1005; ++i) prs[i].clear();
-    for (int i = 0; i < 105; ++i) group[i].clear();
+    for (int i = 0; i < 1005; ++i) userEvents[i].clear();
+    for (int i = 0; i < 105; ++i) eventGroups[i].clear();
 }
- 
+
 void addEvent(int uid, char ename[], int groupid)
 {
     ++uid;
     ++groupid;
-    string vl(ename);
- 
-    prs[uid].insert({ vl, groupid });
-    group[groupid][vl].push_back(uid);
+    string event(ename);
+
+    userEvents[uid].insert({ event, groupid });
+    eventGroups[groupid][event].push_back(uid);
 }
- 
+
 int deleteEvent(int uid, char ename[])
 {
-    int ans;
+    int result;
     ++uid;
-    string vl(ename);
-    int groupid = prs[uid][vl];
- 
-    auto res = group[groupid][vl];
-     
+    string event(ename);
+    int groupId = userEvents[uid][event];
+
+    auto participants = eventGroups[groupId][event];
+
     int i;
-    for (i = 0; i < res.size(); ++i) {
-        if (res[i] == uid) break;
+    for (i = 0; i < participants.size(); ++i) {
+        if (participants[i] == uid) break;
     }
-    if (i == 0) {       //master면
-        ans = res.size();
-        for (int j = 0; j < res.size(); ++j) {
-            prs[res[j]].erase(vl);
+    if (i == 0) {  // if master
+        result = participants.size();
+        for (int j = 0; j < participants.size(); ++j) {
+            userEvents[participants[j]].erase(event);
         }
-        group[groupid][vl].clear();
- 
+        eventGroups[groupId][event].clear();
     }
     else {
-        ans = 1;
-        prs[uid].erase(vl);
-        group[groupid][vl].erase(group[groupid][vl].begin() + i);
+        result = 1;
+        userEvents[uid].erase(event);
+        eventGroups[groupId][event].erase(eventGroups[groupId][event].begin() + i);
     }
-    return ans;
+    return result;
 }
- 
+
 int changeEvent(int uid, char ename[], char cname[])
 {
-    int ans;
+    int result;
     ++uid;
-    string vl(ename);
-    string ch_vl(cname);
-    int groupid = prs[uid][vl];
- 
-    auto res = group[groupid][vl];
- 
+    string event(ename);
+    string newEvent(cname);
+    int groupId = userEvents[uid][event];
+
+    auto participants = eventGroups[groupId][event];
+
     int i = 0;
-    for (i = 0; i < res.size(); ++i) {
-        if (res[i] == uid) break;
+    for (i = 0; i < participants.size(); ++i) {
+        if (participants[i] == uid) break;
     }
     if (i == 0) {
-        ans = res.size();
-        for (int j = 0; j < res.size(); ++j) {
-            prs[res[j]].erase(vl);
-            prs[res[j]].insert({ ch_vl, groupid });
-            group[groupid][ch_vl].push_back(res[j]);
+        result = participants.size();
+        for (int j = 0; j < participants.size(); ++j) {
+            userEvents[participants[j]].erase(event);
+            userEvents[participants[j]].insert({ newEvent, groupId });
+            eventGroups[groupId][newEvent].push_back(participants[j]);
         }
-        group[groupid][vl].clear();
+        eventGroups[groupId][event].clear();
     }
     else {
-        ans = 1;
-        prs[uid].erase(vl);
-        prs[uid].insert({ ch_vl, groupid });
-        group[groupid][vl].erase(group[groupid][vl].begin() + i);
-        group[groupid][ch_vl].push_back(uid);
+        result = 1;
+        userEvents[uid].erase(event);
+        userEvents[uid].insert({ newEvent, groupId });
+        eventGroups[groupId][event].erase(eventGroups[groupId][event].begin() + i);
+        eventGroups[groupId][newEvent].push_back(uid);
     }
-    return ans;
+    return result;
 }
- 
+
 int getCount(int uid)
 {
     ++uid;
-    return prs[uid].size();
+    return userEvents[uid].size();
 }
