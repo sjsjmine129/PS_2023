@@ -1,14 +1,13 @@
-#include <unordered_map>
 #include <string>
 #include <vector>
-
+#include <unordered_map>
 using namespace std;
 
-unordered_map<string, int> userEvents[1005];
-unordered_map<string, vector<int>> eventGroups[105];
+unordered_map<string, int> userEvents[2000];
+unordered_map<string, vector<int>> eventGroups[200];
 
 void init(){
-    for (int i = 0; i < 1005; ++i){
+    for (int i = 0; i < 2000; ++i){
         userEvents[i].clear();
     }
     for (int i = 0; i < 105; ++i){
