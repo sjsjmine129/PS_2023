@@ -17,74 +17,65 @@ void init(){
 }
 
 void addEvent(int uid, char ename[], int groupid){
-    ++uid;
-    ++groupid;
     string event(ename);
 
-    userEvents[uid].insert({ event, groupid });
-    eventGroups[groupid][event].push_back(uid);
+    userEvents[uid+1].insert({ event, groupid+1 });
+    eventGroups[groupid+1][event].push_back(uid+1);
 }
 
 int deleteEvent(int uid, char ename[]){
-    int result;
-    ++uid;
     string event(ename);
-    int groupId = userEvents[uid][event];
-
-    auto participants = eventGroups[groupId][event];
-
-    int i;
-    for (i = 0; i < participants.size(); ++i) {
-        if (participants[i] == uid) break;
-    }
-    if (i == 0) {  // if master
-        result = participants.size();
-        for (int j = 0; j < participants.size(); ++j) {
-            userEvents[participants[j]].erase(event);
-        }
-        eventGroups[groupId][event].clear();
-    }
-    else {
-        result = 1;
-        userEvents[uid].erase(event);
-        eventGroups[groupId][event].erase(eventGroups[groupId][event].begin() + i);
-    }
-    return result;
-}
-
-int changeEvent(int uid, char ename[], char cname[]){
-    int result;
-    ++uid;
-    string event(ename);
-    string newEvent(cname);
-    int groupId = userEvents[uid][event];
+    int groupId = userEvents[uid+1][event];
 
     auto participants = eventGroups[groupId][event];
 
     int i = 0;
     for (i = 0; i < participants.size(); ++i) {
-        if (participants[i] == uid) break;
+        if (participants[i] == uid+1) break;
     }
     if (i == 0) {
-        result = participants.size();
+        for (int j = 0; j < participants.size(); ++j) {
+            userEvents[participants[j]].erase(event);
+        }
+        eventGroups[groupId][event].clear();
+        return participants.size();
+    }
+    else {
+        userEvents[uid+1].erase(event);
+        eventGroups[groupId][event].erase(eventGroups[groupId][event].begin() + i);
+        return 1;
+    }
+}
+
+int changeEvent(int uid, char ename[], char cname[]){
+    string event(ename);
+    string newEvent(cname);
+    int groupId = userEvents[uid+1][event];
+
+    auto participants = eventGroups[groupId][event];
+
+    int i = 0;
+    for (i = 0; i < participants.size(); ++i) {
+        if (participants[i] == uid+1) break;
+    }
+    if (i == 0) {
         for (int j = 0; j < participants.size(); ++j) {
             userEvents[participants[j]].erase(event);
             userEvents[participants[j]].insert({ newEvent, groupId });
             eventGroups[groupId][newEvent].push_back(participants[j]);
         }
         eventGroups[groupId][event].clear();
+        return participants.size();
     }
     else {
-        result = 1;
-        userEvents[uid].erase(event);
-        userEvents[uid].insert({ newEvent, groupId });
+        userEvents[uid+1].erase(event);
+        userEvents[uid+1].insert({ newEvent, groupId });
         eventGroups[groupId][event].erase(eventGroups[groupId][event].begin() + i);
-        eventGroups[groupId][newEvent].push_back(uid);
+        eventGroups[groupId][newEvent].push_back(uid+1);
+        return 1;
     }
-    return result;
 }
 
 int getCount(int uid){
-    ++uid;
-    return userEvents[uid].size();
+    return userEvents[uid+1].size();
 }
