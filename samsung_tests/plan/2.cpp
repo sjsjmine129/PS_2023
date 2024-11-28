@@ -7,14 +7,12 @@ using namespace std;
 unordered_map<string, int> userEvents[1005];
 unordered_map<string, vector<int>> eventGroups[105];
 
-void init()
-{
+void init(){
     for (int i = 0; i < 1005; ++i) userEvents[i].clear();
     for (int i = 0; i < 105; ++i) eventGroups[i].clear();
 }
 
-void addEvent(int uid, char ename[], int groupid)
-{
+void addEvent(int uid, char ename[], int groupid){
     ++uid;
     ++groupid;
     string event(ename);
@@ -23,8 +21,7 @@ void addEvent(int uid, char ename[], int groupid)
     eventGroups[groupid][event].push_back(uid);
 }
 
-int deleteEvent(int uid, char ename[])
-{
+int deleteEvent(int uid, char ename[]){
     int result;
     ++uid;
     string event(ename);
@@ -51,8 +48,7 @@ int deleteEvent(int uid, char ename[])
     return result;
 }
 
-int changeEvent(int uid, char ename[], char cname[])
-{
+int changeEvent(int uid, char ename[], char cname[]){
     int result;
     ++uid;
     string event(ename);
@@ -84,8 +80,7 @@ int changeEvent(int uid, char ename[], char cname[])
     return result;
 }
 
-int getCount(int uid)
-{
+int getCount(int uid){
     ++uid;
     return userEvents[uid].size();
 }
