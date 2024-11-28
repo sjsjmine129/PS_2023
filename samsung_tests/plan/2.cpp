@@ -8,8 +8,12 @@ unordered_map<string, int> userEvents[1005];
 unordered_map<string, vector<int>> eventGroups[105];
 
 void init(){
-    for (int i = 0; i < 1005; ++i) userEvents[i].clear();
-    for (int i = 0; i < 105; ++i) eventGroups[i].clear();
+    for (int i = 0; i < 1005; ++i){
+        userEvents[i].clear();
+    }
+    for (int i = 0; i < 105; ++i){
+        eventGroups[i].clear();
+    }
 }
 
 void addEvent(int uid, char ename[], int groupid){

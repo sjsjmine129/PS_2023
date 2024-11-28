@@ -8,6 +8,7 @@
 		"queue": "cpp",
 		"vector": "cpp",
 		"후보2씨": "cpp",
-		"후보1씨": "cpp"
+		"후보1씨": "cpp",
+		"unordered_map": "cpp"
 	}
 }
