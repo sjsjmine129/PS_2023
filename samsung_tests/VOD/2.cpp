@@ -1,82 +1,80 @@
-#define MAX_N               20000
-#define MAX_M               128
-#define MAX_BLOCKCOUNT      1250
-#define MAX_DATALENGTH      5120000
-#define FRAMESIZE           256
- 
+#define MAX_N          20000
+#define MAX_M         128
+#define MAX_BLOCKCOUNT          1250
+#define MAX_DATALENGTH       5120000
+#define FRAMESIZE          256
+
 struct huffman {
     int symbol, codeword, codewordLength;
 };
- 
-const int TRIE_SIZE = 21 * MAX_M + 5;
- 
-int numFrame, numBlock;
-int currFrame, currBlock;
-int trie[TRIE_SIZE][2], trie_size, sym[TRIE_SIZE];
- 
-unsigned char* encoded[MAX_BLOCKCOUNT];
-unsigned char decoded[MAX_BLOCKCOUNT * 4096];
-bool vis[MAX_BLOCKCOUNT];
- 
-void Init(int N, int* size, unsigned char* data, int M, struct huffman* code)
-{
-    numFrame = N;
-    numBlock = N >> 4;
-     
-    auto p = data;
-    for (int i = 0; i < numBlock; i++) {
-        encoded[i] = p;
-        vis[i] = 0;
-        p += size[i];
+
+unsigned char* encodedData[MAX_BLOCKCOUNT];
+bool blockVisited[MAX_BLOCKCOUNT];
+int totalFrames, totalBlocks, currentFrame, currentBlockIndex;
+int trie[21 * MAX_M + 5][2], trieNodeCount, symbolMap[21 * MAX_M + 5];
+unsigned char decodedData[MAX_BLOCKCOUNT * 4096];
+
+void Init(int N, int* size, unsigned char* data, int M, struct huffman* code) {
+    totalFrames = N;
+    totalBlocks = N >> 4;
+
+    auto dataPointer = data;
+    for (int i = 0; i < totalBlocks; i++) {
+        encodedData[i] = dataPointer;
+        blockVisited[i] = false;
+        dataPointer += size[i];
     }
- 
-    for (int i = 0; i <= trie_size; i++) {
-        trie[i][0] = trie[i][1] = sym[i] = 0;
+
+    for (int i = 0; i <= trieNodeCount; i++) {
+        trie[i][0] = trie[i][1] = symbolMap[i] = 0;
     }
- 
-    trie_size = 0;
+
+    trieNodeCount = 0;
     for (int i = 0; i < M; i++) {
-        int curr = 0;
-        for (int j = code[i].codewordLength - 1; j >= 0; j--) {
-            int x = (code[i].codeword >> j) & 1;
-            if (!trie[curr][x])
-                trie[curr][x] = ++trie_size;
-            curr = trie[curr][x];
+        int currentNode = 0;
+        for (int bitIndex = code[i].codewordLength - 1; bitIndex >= 0; bitIndex--) {
+            int bit = (code[i].codeword >> bitIndex) & 1;
+            if (!trie[currentNode][bit])
+                trie[currentNode][bit] = ++trieNodeCount;
+            currentNode = trie[currentNode][bit];
         }
-        sym[curr] = code[i].symbol;
+        symbolMap[currentNode] = code[i].symbol;
     }
 }
- 
+
 void Goto(int frame) {
-    currFrame = frame;
+    currentFrame = frame;
 }
- 
+
 int Tick(unsigned char* screen) {
-    currBlock = currFrame >> 4;
- 
-    if (vis[currBlock] == false) {
-        vis[currBlock] = true;
-        auto encodedBlock = encoded[currBlock];
-        for (int i = 0, curr = 0; i < 4096; ) {
-            for (int j = 7; j >= 0; j--) {
-                int x = ((*encodedBlock) >> j) & 1;
-                curr = trie[curr][x];
-                if (sym[curr]) {
-                    decoded[currBlock * 4096 + i++] = sym[curr];
-                    curr = 0;
+    currentBlockIndex = currentFrame >> 4;
+
+    if (!blockVisited[currentBlockIndex]) {
+        blockVisited[currentBlockIndex] = true;
+        auto encodedBlock = encodedData[currentBlockIndex];
+
+        for (int i = 0, currentNode = 0; i < 4096; ) {
+            for (int bitPos = 7; bitPos >= 0; bitPos--) {
+                int bit = ((*encodedBlock) >> bitPos) & 1;
+                currentNode = trie[currentNode][bit];
+                if (symbolMap[currentNode]) {
+                    decodedData[currentBlockIndex * 4096 + i++] = symbolMap[currentNode];
+                    currentNode = 0;
                     if (i == 4096)
                         break;
                 }
             }
             encodedBlock++;
         }
+
         for (int i = 256; i < 4096; i++) {
-            decoded[currBlock * 4096 + i] += decoded[currBlock * 4096 + i - 256] - 128;
+            decodedData[currentBlockIndex * 4096 + i] += decodedData[currentBlockIndex * 4096 + i - 256] - 128;
         }
     }
-    for (int i = 0; i < 256; i++) {
-        screen[i] = decoded[currFrame * 256 + i];
+
+    for (int i = 0; i < FRAMESIZE; i++) {
+        screen[i] = decodedData[currentFrame * FRAMESIZE + i];
     }
- 
-    return (currFrame == numFrame - 1) ? currFrame : currFrame++;
+
+    return (currentFrame == totalFrames - 1) ? currentFrame : currentFrame++;
 }
