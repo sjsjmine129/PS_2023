@@ -12,7 +12,7 @@ void swap(char *a, char *b) {
 }
 
 void find_max(char num[], int k, int len) {
-    if (k == 0) { // Base case: No swaps left
+    if (k == 0) {
         int value = atoi(num);
         if (value > max_value) {
             max_value = value;
