@@ -9,6 +9,11 @@
 		"vector": "cpp",
 		"후보2씨": "cpp",
 		"후보1씨": "cpp",
-		"unordered_map": "cpp"
+		"unordered_map": "cpp",
+		"__split_buffer": "c",
+		"deque": "c",
+		"string": "c",
+		"ostream": "c",
+		"iostream": "c"
 	}
 }
