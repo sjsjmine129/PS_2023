@@ -14,6 +14,7 @@
 		"deque": "c",
 		"string": "c",
 		"ostream": "c",
-		"iostream": "c"
+		"iostream": "c",
+		"__locale": "c"
 	}
 }
