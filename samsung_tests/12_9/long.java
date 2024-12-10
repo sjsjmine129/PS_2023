@@ -1,129 +1,135 @@
-import java.io.*;
-import java.util.*;
- 
-public class Solution {
-    public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = null;
- 
-        int T = Integer.parseInt(br.readLine());
-        for (int tc = 1; tc <= T; tc++) {
-             
-            int L = Integer.parseInt(br.readLine());
-            String str = br.readLine();
-             
-            int[] suffixArray = findSuffixArray(str);
-            int[] lcp = findLCP(str, suffixArray);
- 
-            int answer = 0;
-            for (int i = 0; i < L; i++) {
-                answer = Math.max(answer, lcp[i]);
+import java.util.Scanner;
+import java.util.Arrays; // <-- Add this import for Arrays functionality
+import java.io.FileInputStream;
+
+class Solution
+{
+    public static void main(String args[]) throws Exception
+    {
+        // System.setIn(new FileInputStream("res/input.txt"));
+
+        Scanner scanner = new Scanner(System.in);
+        int testCaseCount;
+        testCaseCount = scanner.nextInt();
+
+        for (int currentTestCase = 1; currentTestCase <= testCaseCount; currentTestCase++)
+        {
+            int stringLength = scanner.nextInt();
+            String inputString = scanner.next();
+
+            int[] suffixArray = calculateSuffixArray(inputString);
+            int[] lcpArray = calculateLCP(inputString, suffixArray);
+
+            int maxLCP = 0;
+            for (int i = 0; i < stringLength; i++) {
+                maxLCP = Math.max(maxLCP, lcpArray[i]);
             }
-            System.out.println("#" + tc + " " + answer);
+
+            System.out.println("#" + currentTestCase + " " + maxLCP);
         }
     }
-    public static int[] findSuffixArray(String str) {
-        int N = str.length();
-        Suffix[] sa = new Suffix[N];
- 
-        for (int i = 0; i < N; i++) {
-            int rank = str.charAt(i) - 'a';
-            sa[i] = new Suffix(i, rank);
-        }
-         
-        for (int i = 0; i < N-1; i++) {
-            sa[i].nextRank = sa[i+1].rank;
-        }
-        sa[N-1].nextRank = -1;
-         
 
-        Arrays.sort(sa); 
- 
-         
-        int[] temp = new int[N];
+    public static int[] calculateSuffixArray(String inputString) {
+        int length = inputString.length();
+        Suffix[] suffixes = new Suffix[length];
 
-        for (int length = 4; length < 2 * N; length <<= 1) {
-            int rank = 0, prev = sa[0].rank;
-            sa[0].rank = rank;
-            temp[sa[0].index] = 0;
-             
-            for (int i = 1; i < N; i++) {
-                if (sa[i].rank == prev && sa[i].nextRank == sa[i - 1].nextRank) {
-                    prev = sa[i].rank;
-                    sa[i].rank = rank;
-                } 
-                else {
-                    prev = sa[i].rank;
-                    sa[i].rank = ++rank;
+        for (int i = 0; i < length; i++) {
+            int rank = inputString.charAt(i) - 'a';
+            suffixes[i] = new Suffix(i, rank);
+        }
+
+        for (int i = 0; i < length - 1; i++) {
+            suffixes[i].nextRank = suffixes[i + 1].rank;
+        }
+        suffixes[length - 1].nextRank = -1;
+
+        Arrays.sort(suffixes);
+
+        int[] temporaryArray = new int[length];
+
+        for (int lengthMultiplier = 4; lengthMultiplier < 2 * length; lengthMultiplier <<= 1) {
+            int rank = 0;
+            int previousRank = suffixes[0].rank;
+            suffixes[0].rank = rank;
+            temporaryArray[suffixes[0].index] = 0;
+
+            for (int i = 1; i < length; i++) {
+                if (suffixes[i].rank == previousRank && suffixes[i].nextRank == suffixes[i - 1].nextRank) {
+                    previousRank = suffixes[i].rank;
+                    suffixes[i].rank = rank;
+                } else {
+                    previousRank = suffixes[i].rank;
+                    suffixes[i].rank = ++rank;
                 }
-                temp[sa[i].index] = i;
+                temporaryArray[suffixes[i].index] = i;
             }
- 
-            for (int i = 0; i < N; i++) {
-                int nextIdx = sa[i].index + (length / 2);
-                if(nextIdx >= N) {
-                    sa[i].nextRank = -1;
+
+            for (int i = 0; i < length; i++) {
+                int nextIndex = suffixes[i].index + (lengthMultiplier / 2);
+                if (nextIndex >= length) {
+                    suffixes[i].nextRank = -1;
                     continue;
                 }
-                sa[i].nextRank = sa[temp[nextIdx]].rank;
+                suffixes[i].nextRank = suffixes[temporaryArray[nextIndex]].rank;
             }
-            Arrays.sort(sa);
+            Arrays.sort(suffixes);
         }
- 
-        int[] suffixArray = new int[N];
-        for(int i=0; i<N; i++) {
-            suffixArray[i] = sa[i].index;
+
+        int[] resultSuffixArray = new int[length];
+        for (int i = 0; i < length; i++) {
+            resultSuffixArray[i] = suffixes[i].index;
         }
-        return suffixArray;
+        return resultSuffixArray;
     }
-     
-    private static int[] findLCP(String str, int[] suffixArray) {
-        int N = suffixArray.length;
-        int[] lcp = new int[N];
-        int[] invSuff = new int[N];
-         
-        for (int i=0; i < N; i++) {
-            invSuff[suffixArray[i]] = i;
+
+    private static int[] calculateLCP(String inputString, int[] suffixArray) {
+        int length = suffixArray.length;
+        int[] lcpArray = new int[length];
+        int[] inverseSuffixArray = new int[length];
+
+        for (int i = 0; i < length; i++) {
+            inverseSuffixArray[suffixArray[i]] = i;
         }
-         
+
         int k = 0;
-        for (int i=0; i<N; i++) {
-            if (invSuff[i] == N-1){ 
-                k = 0; 
-                continue; 
-            } 
-       
-            int j = suffixArray[invSuff[i]+1]; 
-       
-            while (i+k<N && j+k<N) {
-                if(str.charAt(i+k) != str.charAt(j+k)) {
+        for (int i = 0; i < length; i++) {
+            if (inverseSuffixArray[i] == length - 1) {
+                k = 0;
+                continue;
+            }
+
+            int j = suffixArray[inverseSuffixArray[i] + 1];
+
+            while (i + k < length && j + k < length) {
+                if (inputString.charAt(i + k) != inputString.charAt(j + k)) {
                     break;
                 }
                 k++;
             }
-       
-            lcp[invSuff[i]] = k;  
- 
-            if (k>0) {
+
+            lcpArray[inverseSuffixArray[i]] = k;
+
+            if (k > 0) {
                 k--;
             }
-        } 
-        return lcp; 
+        }
+        return lcpArray;
     }
 }
- 
+
 class Suffix implements Comparable<Suffix> {
     int index;
     int rank, nextRank;
- 
+
     public Suffix(int index, int rank) {
         this.index = index;
         this.rank = rank;
     }
- 
+
     public int compareTo(Suffix target) {
-        if (this.rank != target.rank)
+        if (this.rank != target.rank) {
             return Integer.compare(this.rank, target.rank);
+        }
         return Integer.compare(this.nextRank, target.nextRank);
     }
 }
