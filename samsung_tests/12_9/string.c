@@ -1,98 +1,52 @@
-#include <iostream>
-#include <algorithm>
-#include <cstring>
-#include <vector>
-using namespace std;
- 
-vector<pair<int, int>> result;
-vector<int> subSumArr;
-int counter;
- 
-string change(int l, int r, string str) {
-    int s = l, e = r;
-    while (l < r) {
-        char temp = str[l];
-        str[l] = str[r];
-        str[r] = temp;
-        l++; r--;
-    }
- 
-    for(int i=s; i<=e; i++){
-        if (str[i] == '(') str[i] = ')';
-        else if (str[i] == ')') str[i] = '(';
-    }
- 
-    return str;
-}
- 
-string flip(string str, int length) {
-    int min = 0;
-    int position = -1;
-    int ret = 0;
-    for (int i = 0; i < length; i++) {
-        if (str[i] == '(') ret++;
-        else if (str[i] == ')') ret--;
- 
-        if (ret < min) {
-            min = ret; 
-            position = i; 
-        }
-    }
- 
-    if (position != -1) {
-        counter++;
-        result.push_back(make_pair(0, position));
-        str = change(0, position, str);
-    }
- 
-    return str;
-}
- 
-void solve(string str, int len) {
-    if (len % 2 == 1) {
-        counter = -1;
-        return;
-    }
- 
-    str = flip(str, len);
- 
-    int sum = 0;
-    for (int i = 0; i < len; i++) {
-        if (str[i] == '(') sum++;
-        else if (str[i] == ')') sum--;
-        subSumArr.push_back(sum);
-    }
- 
-    if(subSumArr.back() == 0) return;
-    
-    int halfValue = subSumArr.back() / 2;
-    int pos = -1;
-    for (int i = 0; i < len; i++) {
-        if (halfValue == subSumArr.at(i)) {
-            pos = i + 1;
-        }
-    }
-    result.push_back(make_pair(pos, len - 1));
-    counter++;
-}
- 
-int main(void) {
-    int testCase;
-    cin >> testCase;
-    for (int tc = 1; tc <= testCase; tc++) {
-        int len; string str;
-        cin >> len >> str;
-        
-        counter = 0;
-        subSumArr.clear();
-        result.clear();
- 
-        solve(str, len);
- 
-        printf("#%d %d\n", tc, counter);
-        for (int i = 0; i < result.size(); i++) {
-            printf("%d %d\n", result[i].first, result[i].second);
-        }
-    }
-    return 0;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.math.BigDecimal;
+
+//2xN 직사각형을 2x1, 2x2 타일로 채우는 문제
+//dp[i] 를 2xi 의 방법의 수라고 할 때, 세로 2는 고정이기 때문에 
+//dp[1] 은 1개, dp[2] 는 3개의 방법이 존재한다. 
+//이 때, dp[i] = dp[i-1] + dp[i-2]*2 의 점화식을 만들 수 있다. 
+//dp[3] 을 생각해보면 dp[2] 는 이 고정이라고 할 때 dp[1] 은 양쪽으로 배치할 수 있기 때문에 x2 가 된다. 
+
+public class Solution {
+
+	static int N;
+	static BigDecimal[] dp;
+
+	public static void test(int testNo) {
+
+		dp = new BigDecimal[N + 1];
+
+		// dp[1] = 1
+		// dp[2] = 3
+		// dp[i] = dp[i-1] + dp[i-2]*2
+
+		if (N < 2) {
+			System.out.println("#" + testNo + " 1");
+		} else {
+			dp[1] = new BigDecimal(1);
+			dp[2] = new BigDecimal(3);
+
+			for (int i = 3; i <= N; i++) {
+				BigDecimal tmp = dp[i - 1].add(dp[i - 2].multiply(new BigDecimal(2)));
+				dp[i] = tmp;
+			}
+
+			System.out.println("#" + testNo + " " + dp[N]);
+		}
+	}
+
+	public static void main(String[] args) throws NumberFormatException, IOException {
+		// TODO Auto-generated method stub
+		InputStreamReader isr = new InputStreamReader(System.in);
+		BufferedReader br = new BufferedReader(isr);
+
+		int T = Integer.parseInt(br.readLine());
+
+		for (int tc = 1; tc <= T; tc++) {
+			N = Integer.parseInt(br.readLine());
+			test(tc);
+		}
+	}
 }
